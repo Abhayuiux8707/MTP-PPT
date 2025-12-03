@@ -8,6 +8,7 @@ import { TherapyRadarChart, InsightTriangle, SensoryConcentricMap, ExperienceMat
 // --- 1. OVERVIEW ---
 export const Overview: React.FC = () => {
   const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1606206591513-39908d8f338d?q=80&w=2070&auto=format&fit=crop");
+  const [hasUploaded, setHasUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -17,6 +18,7 @@ export const Overview: React.FC = () => {
       reader.onload = (e) => {
         if (e.target?.result) {
           setHeroImage(e.target.result as string);
+          setHasUploaded(true);
         }
       };
       reader.readAsDataURL(file);
@@ -25,8 +27,8 @@ export const Overview: React.FC = () => {
 
   return (
     <div className="h-[calc(100vh-160px)] min-h-[600px] w-full bg-white rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-row">
-      {/* Left Content - Increased Padding for better X-axis layout */}
-      <div className="w-[45%] flex flex-col justify-between pl-20 pr-12 py-16 relative z-10 bg-white border-r border-slate-100">
+      {/* Left Content - Reduced width to 40% */}
+      <div className="w-[40%] flex flex-col justify-between pl-20 pr-12 py-16 relative z-10 bg-white border-r border-slate-100">
         
         {/* Header Tags */}
         <div className="flex flex-col gap-4 items-start">
@@ -77,8 +79,8 @@ export const Overview: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Image - Removed Gradient Overlay */}
-      <div className="w-[55%] relative h-full bg-slate-100 group overflow-hidden">
+      {/* Right Image - Increased width to 60% */}
+      <div className="w-[60%] relative h-full bg-slate-100 group overflow-hidden">
         <img 
           src={heroImage} 
           alt="Hero" 
@@ -93,12 +95,15 @@ export const Overview: React.FC = () => {
             accept="image/*"
             onChange={handleImageUpload}
         />
-        <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute bottom-12 right-12 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl font-bold text-slate-900 shadow-xl flex items-center gap-3 hover:scale-105 transition-all hover:bg-white text-sm border border-white/50"
-        >
-           <Camera size={20} /> Change Visual
-        </button>
+        
+        {!hasUploaded && (
+            <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-12 right-12 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl font-bold text-slate-900 shadow-xl flex items-center gap-3 hover:scale-105 transition-all hover:bg-white text-sm border border-white/50"
+            >
+               <Camera size={20} /> Change Visual
+            </button>
+        )}
       </div>
     </div>
   );
