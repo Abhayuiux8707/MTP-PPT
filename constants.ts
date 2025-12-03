@@ -1,4 +1,5 @@
 
+
 import { Brain, Music, Image as ImageIcon, Wind, Hand, Heart, Activity, Users, Layout, MapIcon, MessageCircle, FileText, Smartphone, Eye, Mic, Puzzle, ClipboardList, BookOpen, Smile, Zap, Sun, CloudRain, Coffee, Feather, Target, Compass, Anchor, AlertTriangle, Monitor, MousePointer2, Clock, Search, RefreshCw, Fingerprint } from 'lucide-react';
 
 export const NAV_TABS = [
@@ -19,7 +20,7 @@ export const NAV_TABS = [
 
 export const PERSONAS = {
   primary: {
-    name: 'Arun Kumar',
+    name: 'Mr. Arun Kumar',
     age: 67,
     role: 'Retired Teacher',
     condition: 'Mild Alzheimer’s',

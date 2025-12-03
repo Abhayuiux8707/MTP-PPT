@@ -491,13 +491,13 @@ export const Personas: React.FC = () => {
             {/* Profile Header */}
             <div className="flex items-center gap-8 relative z-10">
                 <div className="relative">
-                    <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2094&auto=format&fit=crop" className="w-32 h-32 rounded-[2rem] object-cover shadow-lg border-4 border-white" alt="Arun" />
+                    <img src="https://images.unsplash.com/photo-1559548331-f9cb98001426?q=80&w=2070&auto=format&fit=crop" className="w-32 h-32 rounded-[2rem] object-cover shadow-lg border-4 border-white" alt="Mr. Arun Kumar" />
                     <div className="absolute -bottom-3 -right-3 bg-indigo-600 text-white p-2 rounded-xl shadow-md">
                         <User size={24} />
                     </div>
                 </div>
                 <div>
-                    <h3 className="text-4xl font-extrabold text-slate-900">Arun Kumar</h3>
+                    <h3 className="text-4xl font-extrabold text-slate-900">Mr. Arun Kumar</h3>
                     <p className="text-xl text-slate-500 font-bold mt-1">67 • Retired Teacher</p>
                     <span className="inline-block mt-3 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-xl text-sm font-extrabold uppercase tracking-wide">
                         Early Stage Alzheimer's
@@ -555,7 +555,7 @@ export const Personas: React.FC = () => {
                         <Smile size={18}/> Motivations
                      </h4>
                      <div className="flex flex-col gap-3">
-                        {['Old Bollywood Songs', 'Daily Routine', 'Social Dignity'].map((t,i) => (
+                        {['"Main Zindagi Ka Saath"', 'Evening Tea Routine', 'Social Dignity'].map((t,i) => (
                             <span key={i} className="text-slate-800 font-bold text-base leading-tight bg-white/60 px-3 py-2 rounded-xl border border-emerald-100/50">
                                 {t}
                             </span>
@@ -586,7 +586,7 @@ export const Personas: React.FC = () => {
              {/* Profile Header */}
              <div className="flex items-center gap-8 relative z-10">
                 <div className="relative">
-                    <img src="https://images.unsplash.com/photo-1551185887-a5a14384d1d1?q=80&w=2071&auto=format&fit=crop" className="w-32 h-32 rounded-[2rem] object-cover shadow-lg border-4 border-white" alt="Meera" />
+                    <img src="https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?q=80&w=1974&auto=format&fit=crop" className="w-32 h-32 rounded-[2rem] object-cover shadow-lg border-4 border-white" alt="Meera" />
                     <div className="absolute -bottom-3 -right-3 bg-emerald-600 text-white p-2 rounded-xl shadow-md">
                         <Heart size={24} />
                     </div>
