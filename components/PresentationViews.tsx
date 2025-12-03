@@ -1,55 +1,103 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { PERSONAS, MAPPING_DATA, THERAPY_HEATMAP_DATA, THERAPY_RADAR_DATA, THERAPY_CARDS_DATA, MATRIX_STRATEGIC_INSIGHTS, SIMPLE_HYPOTHESES, TRI_IMPACT_MODEL, EXPERIMENT_PLANS, SENSORY_TRIGGER_DATA, EIMC_PHASES, EIMC_MAPPING } from '../constants';
-import { ArrowRight, Music, CheckCircle, Maximize2, Download, MousePointer, Upload, PenTool, Image as ImageIcon, Edit3, Camera, Calendar, Sparkles, Mic, Lightbulb, FileText, Activity, Brain, Puzzle, Wind, BookOpen, Layers, MapIcon, Eye, Zap, Hand, ArrowDown, Target, Compass, FlaskConical, Microscope, Clock, Users, User, Heart, ChevronRight, Triangle, Fingerprint, Smile, Layout, Smartphone, AlertCircle } from 'lucide-react';
+import { ArrowRight, Music, CheckCircle, Maximize2, Download, MousePointer, Upload, PenTool, Image as ImageIcon, Edit3, Camera, Calendar, Sparkles, Mic, Lightbulb, FileText, Activity, Brain, Puzzle, Wind, BookOpen, Layers, MapIcon, Eye, Zap, Hand, ArrowDown, Target, Compass, FlaskConical, Microscope, Clock, Users, User, Heart, ChevronRight, Triangle, Fingerprint, Smile, Layout, Smartphone, AlertCircle, Frown } from 'lucide-react';
 import CognitiveRadarChart from './CognitiveRadarChart';
 import { TherapyRadarChart, InsightTriangle, SensoryConcentricMap, ExperienceMatrixChart, Storyboard, JourneyMap } from './Visualizations';
 
 // --- 1. OVERVIEW ---
 export const Overview: React.FC = () => {
+  const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1606206591513-39908d8f338d?q=80&w=2070&auto=format&fit=crop");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setHeroImage(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-160px)] min-h-[600px] w-full bg-white rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-row">
-      <div className="w-[45%] flex flex-col justify-center p-16 relative z-10 bg-white border-r border-slate-100">
-        <div className="absolute top-12 left-16">
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-slate-100 rounded-full border border-slate-200">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-sm font-bold text-slate-600 uppercase tracking-widest">Phase 1.0 Research</span>
-          </div>
+      {/* Left Content - Increased Padding for better X-axis layout */}
+      <div className="w-[45%] flex flex-col justify-between pl-20 pr-12 py-16 relative z-10 bg-white border-r border-slate-100">
+        
+        {/* Header Tags */}
+        <div className="flex flex-col gap-4 items-start">
+           <div className="inline-flex items-center gap-3 px-4 py-2 bg-slate-900 rounded-lg shadow-lg shadow-slate-200">
+             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+             <span className="text-sm font-bold text-white uppercase tracking-widest">Masters Thesis Project</span>
+           </div>
+           <span className="text-sm font-bold text-slate-500 uppercase tracking-widest pl-1">
+             M.Des Batch 2024–26
+           </span>
         </div>
-        <div className="space-y-10">
-          <h1 className="text-8xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
+
+        {/* Main Title Area */}
+        <div className="space-y-8">
+          <h1 className="text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
             Sanjeevani
           </h1>
-          <div className="w-32 h-3 bg-emerald-500 rounded-full"></div>
-          <h2 className="text-4xl font-light text-slate-600 leading-snug">
-            Therapeutic Design for <br/>
-            <span className="font-bold text-emerald-700">Early-Stage Alzheimer's</span>
-          </h2>
-          <p className="text-xl text-slate-700 leading-relaxed max-w-lg font-medium">
-            A design-research framework reducing agitation through nostalgic resonance and bio-adaptive UX environments.
-          </p>
+          <div className="w-24 h-2 bg-emerald-500 rounded-full"></div>
+          <div>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-3">Topic</p>
+            <h2 className="text-2xl font-medium text-slate-600 leading-normal max-w-xl">
+              Phase-1 Therapeutic Experience Design Framework for <span className="font-bold text-slate-900 block mt-2 text-3xl">Alzheimer’s Care</span>
+            </h2>
+          </div>
         </div>
         
-        <div className="mt-16 flex gap-16">
-           <div>
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Target</p>
-              <p className="font-bold text-slate-900 text-xl">Mild Cognitive Impairment</p>
+        {/* Footer Details */}
+        <div className="space-y-8">
+           <div className="border-l-4 border-slate-200 pl-6 py-2">
+              <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Department</p>
+              <p className="font-bold text-slate-800 text-sm leading-relaxed">
+                DEPARTMENT OF DESIGN<br/>
+                INDIAN INSTITUTE OF TECHNOLOGY GUWAHATI
+              </p>
            </div>
-           <div>
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Method</p>
-              <p className="font-bold text-slate-900 text-xl">Reminiscence Therapy</p>
+
+           <div className="flex gap-12 border-t border-slate-100 pt-8">
+               <div>
+                  <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">Guided By</p>
+                  <p className="font-bold text-slate-900 text-lg">Dr. Manoj Majhi</p>
+               </div>
+               <div>
+                  <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">Student</p>
+                  <p className="font-bold text-slate-900 text-lg">Abhay Singh</p>
+                  <p className="text-xs font-medium text-slate-500 mt-0.5">Roll No: 244205002</p> 
+               </div>
            </div>
         </div>
       </div>
-      <div className="w-[55%] relative h-full bg-slate-100 group">
+
+      {/* Right Image - Removed Gradient Overlay */}
+      <div className="w-[55%] relative h-full bg-slate-100 group overflow-hidden">
         <img 
-          src="https://images.unsplash.com/photo-1606206591513-39908d8f338d?q=80&w=2070&auto=format&fit=crop" 
+          src={heroImage} 
           alt="Hero" 
-          className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700" 
+          className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 transition-all duration-700" 
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/10 to-transparent"></div>
-        <button className="absolute bottom-12 right-12 bg-white/95 backdrop-blur px-8 py-4 rounded-2xl font-bold text-slate-900 shadow-xl flex items-center gap-3 hover:scale-105 transition-transform text-lg">
-           <Camera size={24} /> Change Visual
+        
+        {/* Image Upload Controls */}
+        <input 
+            type="file" 
+            ref={fileInputRef}
+            className="hidden" 
+            accept="image/*"
+            onChange={handleImageUpload}
+        />
+        <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute bottom-12 right-12 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl font-bold text-slate-900 shadow-xl flex items-center gap-3 hover:scale-105 transition-all hover:bg-white text-sm border border-white/50"
+        >
+           <Camera size={20} /> Change Visual
         </button>
       </div>
     </div>
@@ -416,137 +464,210 @@ export const ExperienceBenchmarkingView: React.FC = () => {
 // --- 6. PERSONAS ---
 export const Personas: React.FC = () => {
   return (
-    <div className="h-full flex flex-col xl:flex-row gap-8">
-        {/* Arun's Card */}
-        <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm flex flex-col group">
-            {/* Header Image Area */}
-            <div className="h-64 relative bg-slate-100">
-                 <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2094&auto=format&fit=crop" className="w-full h-full object-cover object-top" alt="Arun Kumar" />
-                 <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-slate-900/80 to-transparent p-8">
-                     <h2 className="text-3xl font-bold text-white mb-1">Arun Kumar, 67</h2>
-                     <p className="text-emerald-300 font-bold text-lg">Mild Alzheimer's (Early Stage)</p>
-                 </div>
-                 <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white font-bold text-xs uppercase tracking-widest border border-white/30">Primary User</div>
+    <div className="h-full w-full bg-slate-50 rounded-[2.5rem] border border-slate-200 p-8 overflow-y-auto no-scrollbar">
+      {/* Header */}
+      <div className="mb-10 flex justify-between items-end border-b border-slate-200 pb-6">
+          <div>
+            <h2 className="text-5xl font-bold text-slate-900 tracking-tight">User Personas</h2>
+            <p className="text-2xl text-slate-500 mt-3 font-medium">The Patient-Caregiver Dyad</p>
+          </div>
+          <div className="flex gap-3">
+             <span className="px-6 py-3 bg-white border border-indigo-200 text-indigo-700 rounded-2xl text-sm font-extrabold uppercase tracking-widest shadow-sm">Patient</span>
+             <span className="px-6 py-3 bg-white border border-emerald-200 text-emerald-700 rounded-2xl text-sm font-extrabold uppercase tracking-widest shadow-sm">Caregiver</span>
+          </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10">
+         {/* Arun's Card */}
+         <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-xl flex flex-col gap-8 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+            {/* Background Gradient */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50/50 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-indigo-100/50 transition-colors"></div>
+
+            {/* Profile Header */}
+            <div className="flex items-center gap-8 relative z-10">
+                <div className="relative">
+                    <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2094&auto=format&fit=crop" className="w-32 h-32 rounded-[2rem] object-cover shadow-lg border-4 border-white" alt="Arun" />
+                    <div className="absolute -bottom-3 -right-3 bg-indigo-600 text-white p-2 rounded-xl shadow-md">
+                        <User size={24} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-4xl font-extrabold text-slate-900">Arun Kumar</h3>
+                    <p className="text-xl text-slate-500 font-bold mt-1">67 • Retired Teacher</p>
+                    <span className="inline-block mt-3 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-xl text-sm font-extrabold uppercase tracking-wide">
+                        Early Stage Alzheimer's
+                    </span>
+                </div>
             </div>
-            
-            <div className="p-8 flex-grow flex flex-col gap-8">
-                {/* Quote */}
-                <div className="relative pl-6 border-l-4 border-indigo-500">
-                    <p className="text-xl font-serif italic text-slate-700 leading-relaxed">“Where is that old song? It made evenings better.”</p>
-                </div>
 
-                {/* Grid Details */}
-                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
-                    <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Occupation</p>
-                        <p className="font-bold text-slate-800">Retired School Teacher</p>
-                    </div>
-                     <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Lives With</p>
-                        <p className="font-bold text-slate-800">Spouse (Meera)</p>
-                    </div>
-                    <div className="col-span-2">
-                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Typical Day</p>
-                         <p className="text-sm font-medium text-slate-600 leading-snug">After morning tea he enjoys sitting on the veranda but often forgets the day’s events.</p>
-                    </div>
-                </div>
+            {/* Quote - Larger and clearer */}
+            <div className="relative">
+                 <span className="absolute -top-4 -left-2 text-6xl text-indigo-200 font-serif">“</span>
+                 <p className="text-2xl font-serif italic text-slate-800 leading-relaxed pl-8 relative z-10">
+                   Where is that old song? It made evenings better... I know I used to sing it.
+                 </p>
+            </div>
 
-                {/* Behavioral & Emotional */}
-                 <div className="space-y-4">
-                     <h4 className="flex items-center gap-2 text-sm font-bold text-indigo-600 uppercase tracking-wide"><Brain size={16}/> Behavioral Profile</h4>
-                     <div className="grid grid-cols-1 gap-3">
-                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex gap-3 items-start">
-                             <Clock size={16} className="text-slate-400 mt-1 shrink-0" />
-                             <div><span className="font-bold text-slate-700 block text-sm">Attention Span</span><span className="text-xs text-slate-500">Short bursts (2–4 mins)</span></div>
-                         </div>
-                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex gap-3 items-start">
-                             <Smartphone size={16} className="text-slate-400 mt-1 shrink-0" />
-                             <div><span className="font-bold text-slate-700 block text-sm">Tech Comfort</span><span className="text-xs text-slate-500">Minimal; uses remote with help</span></div>
-                         </div>
+            {/* Capabilities - Chunkier Bars */}
+            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 space-y-5">
+                <div className="flex items-center gap-3 mb-2">
+                    <Activity className="text-indigo-500" size={20} />
+                    <h4 className="text-sm font-extrabold text-slate-400 uppercase tracking-widest">Capabilities</h4>
+                </div>
+                
+                {[
+                    { label: 'Tech Comfort', val: 20, color: 'bg-indigo-500' },
+                    { label: 'Recent Memory', val: 15, color: 'bg-rose-500' },
+                    { label: 'Long-term Recall', val: 85, color: 'bg-emerald-500' },
+                ].map((stat, i) => (
+                    <div key={i}>
+                       <div className="flex justify-between text-sm font-bold text-slate-700 mb-2">
+                           <span>{stat.label}</span>
+                       </div>
+                       <div className="w-full bg-slate-200 rounded-full h-3">
+                           <div className={`${stat.color} h-3 rounded-full transition-all duration-1000`} style={{ width: `${stat.val}%` }}></div>
+                       </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Frustrations & Motivations - Using Tags/Cards instead of lists */}
+            <div className="grid grid-cols-2 gap-6">
+                <div className="bg-rose-50 rounded-3xl p-6 border border-rose-100">
+                     <h4 className="flex items-center gap-2 text-sm font-extrabold text-rose-600 uppercase tracking-widest mb-4">
+                        <Frown size={18}/> Frustrations
+                     </h4>
+                     <div className="flex flex-col gap-3">
+                        {['Forgetting Names', 'Complex Remotes', 'Feeling "Slow"'].map((t,i) => (
+                            <span key={i} className="text-slate-800 font-bold text-base leading-tight bg-white/60 px-3 py-2 rounded-xl border border-rose-100/50">
+                                {t}
+                            </span>
+                        ))}
                      </div>
-                 </div>
-
-                 <div className="space-y-4">
-                      <h4 className="flex items-center gap-2 text-sm font-bold text-rose-600 uppercase tracking-wide"><Heart size={16}/> Emotional Profile</h4>
-                      <div className="flex flex-wrap gap-2">
-                          {['Fears Abandonment', 'Loves Old Songs', 'Enjoy Festivals'].map(t => (
-                              <span key={t} className="px-3 py-1 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold border border-rose-100">{t}</span>
-                          ))}
-                      </div>
-                 </div>
-
-                 {/* How Sanjeevani Helps */}
-                 <div className="bg-indigo-50 rounded-2xl p-6 border border-indigo-100 mt-auto">
-                     <h4 className="text-indigo-900 font-bold mb-3 flex items-center gap-2"><Zap size={18} className="fill-indigo-600 text-indigo-600"/> Sanjeevani Intervention</h4>
-                     <ul className="space-y-2 text-sm text-indigo-800 font-medium">
-                         <li className="flex gap-2 items-start"><CheckCircle size={14} className="mt-1 shrink-0"/> Nostalgia Room anchors with object + song.</li>
-                         <li className="flex gap-2 items-start"><CheckCircle size={14} className="mt-1 shrink-0"/> Garden reduces evening restlessness.</li>
-                     </ul>
-                 </div>
-            </div>
-        </div>
-
-        {/* Meera's Card */}
-        <div className="flex-1 bg-slate-50 rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm flex flex-col group">
-             {/* Header Image Area */}
-            <div className="h-64 relative bg-slate-200">
-                 <img src="https://images.unsplash.com/photo-1551185887-a5a14384d1d1?q=80&w=2071&auto=format&fit=crop" className="w-full h-full object-cover object-center" alt="Meera" />
-                 <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-slate-900/80 to-transparent p-8">
-                     <h2 className="text-3xl font-bold text-white mb-1">Meera, 62</h2>
-                     <p className="text-emerald-300 font-bold text-lg">Primary Caregiver (Spouse)</p>
-                 </div>
-                  <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white font-bold text-xs uppercase tracking-widest border border-white/30">Secondary User</div>
-            </div>
-
-            <div className="p-8 flex-grow flex flex-col gap-8">
-                {/* Quote */}
-                <div className="relative pl-6 border-l-4 border-emerald-500">
-                    <p className="text-xl font-serif italic text-slate-700 leading-relaxed">“I need something I can open and use within a minute.”</p>
                 </div>
+                <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100">
+                     <h4 className="flex items-center gap-2 text-sm font-extrabold text-emerald-600 uppercase tracking-widest mb-4">
+                        <Smile size={18}/> Motivations
+                     </h4>
+                     <div className="flex flex-col gap-3">
+                        {['Old Bollywood Songs', 'Daily Routine', 'Social Dignity'].map((t,i) => (
+                            <span key={i} className="text-slate-800 font-bold text-base leading-tight bg-white/60 px-3 py-2 rounded-xl border border-emerald-100/50">
+                                {t}
+                            </span>
+                        ))}
+                     </div>
+                </div>
+            </div>
 
-                {/* Grid Details */}
-                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+            {/* Solution Footer */}
+            <div className="mt-auto bg-indigo-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 backdrop-blur rounded-2xl">
+                        <Zap size={24} className="text-white" />
+                    </div>
                     <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</p>
-                        <p className="font-bold text-slate-800">Spouse & Caregiver</p>
-                    </div>
-                     <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Responsibilities</p>
-                        <p className="font-bold text-slate-800">Medication, Routine</p>
+                        <p className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-1">Design Solution</p>
+                        <p className="text-lg font-bold">Nostalgia Room & One-Tap Interaction</p>
                     </div>
                 </div>
-
-                {/* Pain Points */}
-                 <div className="space-y-4">
-                     <h4 className="flex items-center gap-2 text-sm font-bold text-amber-600 uppercase tracking-wide"><AlertCircle size={16}/> Pain Points</h4>
-                     <ul className="space-y-3">
-                         {['Emotional burnout from repetitive tasks.', 'Difficulty calming Arun in late afternoons.', 'Needs quick interventions she trusts.'].map((pt, i) => (
-                             <li key={i} className="bg-white p-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 shadow-sm flex gap-3">
-                                 <span className="text-amber-500 font-bold">•</span> {pt}
-                             </li>
-                         ))}
-                     </ul>
-                 </div>
-
-                 {/* Needs */}
-                 <div className="space-y-4">
-                      <h4 className="flex items-center gap-2 text-sm font-bold text-emerald-600 uppercase tracking-wide"><Target size={16}/> Design Needs</h4>
-                      <div className="flex flex-wrap gap-2">
-                          {['One-tap tools', 'Simple tags', 'Short note field', 'Quick summaries'].map(t => (
-                              <span key={t} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-100">{t}</span>
-                          ))}
-                      </div>
-                 </div>
-
-                 {/* How Sanjeevani Helps */}
-                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mt-auto">
-                     <h4 className="text-slate-900 font-bold mb-3 flex items-center gap-2"><Layout size={18} className="text-emerald-500"/> Sanjeevani Solution</h4>
-                     <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                         Caregiver dashboard (tags, notes) reduces guesswork and helps show progress over time.
-                     </p>
-                 </div>
             </div>
-        </div>
+         </div>
+
+         {/* Meera's Card */}
+         <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-xl flex flex-col gap-8 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+             {/* Background Gradient */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-50/50 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-emerald-100/50 transition-colors"></div>
+
+             {/* Profile Header */}
+             <div className="flex items-center gap-8 relative z-10">
+                <div className="relative">
+                    <img src="https://images.unsplash.com/photo-1551185887-a5a14384d1d1?q=80&w=2071&auto=format&fit=crop" className="w-32 h-32 rounded-[2rem] object-cover shadow-lg border-4 border-white" alt="Meera" />
+                    <div className="absolute -bottom-3 -right-3 bg-emerald-600 text-white p-2 rounded-xl shadow-md">
+                        <Heart size={24} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-4xl font-extrabold text-slate-900">Meera</h3>
+                    <p className="text-xl text-slate-500 font-bold mt-1">62 • Spouse</p>
+                    <span className="inline-block mt-3 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-xl text-sm font-extrabold uppercase tracking-wide">
+                        Primary Caregiver
+                    </span>
+                </div>
+            </div>
+
+            {/* Quote */}
+            <div className="relative">
+                 <span className="absolute -top-4 -left-2 text-6xl text-emerald-200 font-serif">“</span>
+                 <p className="text-2xl font-serif italic text-slate-800 leading-relaxed pl-8 relative z-10">
+                   I need something I can open and use within a minute to calm him down.
+                 </p>
+            </div>
+
+            {/* Capabilities */}
+            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 space-y-5">
+                <div className="flex items-center gap-3 mb-2">
+                    <Activity className="text-emerald-500" size={20} />
+                    <h4 className="text-sm font-extrabold text-slate-400 uppercase tracking-widest">Capabilities</h4>
+                </div>
+                
+                {[
+                    { label: 'Tech Literacy', val: 60, color: 'bg-emerald-500' },
+                    { label: 'Stress Level', val: 90, color: 'bg-rose-500' },
+                    { label: 'Free Time', val: 15, color: 'bg-amber-500' },
+                ].map((stat, i) => (
+                    <div key={i}>
+                       <div className="flex justify-between text-sm font-bold text-slate-700 mb-2">
+                           <span>{stat.label}</span>
+                       </div>
+                       <div className="w-full bg-slate-200 rounded-full h-3">
+                           <div className={`${stat.color} h-3 rounded-full transition-all duration-1000`} style={{ width: `${stat.val}%` }}></div>
+                       </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Pain Points & Goals */}
+            <div className="grid grid-cols-2 gap-6">
+                <div className="bg-amber-50 rounded-3xl p-6 border border-amber-100">
+                     <h4 className="flex items-center gap-2 text-sm font-extrabold text-amber-600 uppercase tracking-widest mb-4">
+                        <AlertCircle size={18}/> Pain Points
+                     </h4>
+                     <div className="flex flex-col gap-3">
+                        {['Emotional Burnout', 'Unpredictable Moods', 'No Personal Time'].map((t,i) => (
+                            <span key={i} className="text-slate-800 font-bold text-base leading-tight bg-white/60 px-3 py-2 rounded-xl border border-amber-100/50">
+                                {t}
+                            </span>
+                        ))}
+                     </div>
+                </div>
+                <div className="bg-blue-50 rounded-3xl p-6 border border-blue-100">
+                     <h4 className="flex items-center gap-2 text-sm font-extrabold text-blue-600 uppercase tracking-widest mb-4">
+                        <Target size={18}/> Goals
+                     </h4>
+                     <div className="flex flex-col gap-3">
+                        {['Quick Calming', 'Tracking Health', 'Finding Respite'].map((t,i) => (
+                            <span key={i} className="text-slate-800 font-bold text-base leading-tight bg-white/60 px-3 py-2 rounded-xl border border-blue-100/50">
+                                {t}
+                            </span>
+                        ))}
+                     </div>
+                </div>
+            </div>
+
+            {/* Solution Footer */}
+            <div className="mt-auto bg-emerald-600 rounded-3xl p-6 text-white shadow-lg shadow-emerald-200">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 backdrop-blur rounded-2xl">
+                        <Layout size={24} className="text-white" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-emerald-200 uppercase tracking-widest mb-1">Design Solution</p>
+                        <p className="text-lg font-bold">Caregiver Dashboard & Quick Launch</p>
+                    </div>
+                </div>
+            </div>
+         </div>
+      </div>
     </div>
   );
 };
