@@ -1,8 +1,8 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceArea, ReferenceLine, Customized, ZAxis } from 'recharts';
 import { JOURNEY_DATA, EXPERIENCE_MATRIX_POINTS, STORYBOARD_STEPS, THERAPY_TRIANGLE_DATA, SENSORY_TRIGGER_DATA, HYPOTHESIS_NODES, HYPOTHESIS_LINKS, THERAPY_RADAR_DATA } from '../constants';
-import { AlertCircle, Zap, Smile, CheckCircle, Tablet, Radio, Volume2, CloudDrizzle, CloudLightning, Sun, Activity, Upload, Image as ImageIcon, Music, Heart, Eye, Hand, Wind, Brain, User, ArrowUpRight, Target, Star, Hexagon, ZoomIn, ZoomOut, RotateCcw, Move, MousePointer2, UserCircle } from 'lucide-react';
+import { AlertCircle, Zap, Smile, CheckCircle, Tablet, Radio, Volume2, CloudDrizzle, CloudLightning, Sun, Activity, Upload, Image as ImageIcon, Music, Heart, Eye, Hand, Wind, Brain, User, ArrowUpRight, Target, Star, Hexagon, ZoomIn, ZoomOut, RotateCcw, Move, MousePointer2, UserCircle, Clock, AlertTriangle, Check, ArrowRight, MessageSquare, Sunset, Coffee, Frown, Mic, HelpCircle, UserPlus, Music2, Wifi, Trash2 } from 'lucide-react';
 
 const COLOR_MAP: Record<string, string> = {
   indigo: '#4f46e5',
@@ -13,6 +13,8 @@ const COLOR_MAP: Record<string, string> = {
   blue: '#3b82f6',
   slate: '#64748b',
 };
+
+// ... (Existing components: JourneyMap, SensoryConcentricMap, etc. remain unchanged) ...
 
 export const JourneyMap: React.FC = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
@@ -203,16 +205,317 @@ export const SensoryConcentricMap: React.FC = () => {
   )
 };
 
+// --- NEW SKETCH COMPONENT FOR STORYBOARD ---
+const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall' | 'calm', id: string }) => {
+    const [image, setImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        // Load stored image on mount
+        const storedImage = localStorage.getItem(`sanjeevani_sketch_${id}`);
+        if (storedImage) {
+            setImage(storedImage);
+        }
+    }, [id]);
+
+    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const result = event.target?.result as string;
+                setImage(result);
+                localStorage.setItem(`sanjeevani_sketch_${id}`, result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const triggerUpload = () => {
+        fileInputRef.current?.click();
+    };
+
+    return (
+        <div className="bg-white p-4 rounded-xl border-2 border-slate-200 shadow-md transform rotate-1 transition-transform hover:rotate-0 hover:scale-[1.02] duration-300 relative group">
+             {/* Paper Texture */}
+             <div className="absolute inset-2 border border-slate-100 border-dashed rounded-lg z-0"></div>
+             
+             {/* Content Area */}
+             <div 
+                className="aspect-[4/3] bg-slate-50 relative overflow-hidden rounded-lg z-10 flex items-center justify-center cursor-pointer"
+                onClick={triggerUpload}
+             >
+                 <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleUpload}
+                 />
+
+                 {image ? (
+                     <div className="w-full h-full relative group">
+                        <img src={image} alt="Sketch" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="bg-white/90 px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 flex items-center gap-2">
+                                <Upload size={14} /> Change
+                            </span>
+                        </div>
+                     </div>
+                 ) : (
+                     <div className="relative w-full h-full flex items-center justify-center">
+                         {type === 'trigger' && (
+                             <div className="relative w-full h-full flex items-center justify-center">
+                                 {/* Background Elements */}
+                                 <Sunset className="text-orange-300 absolute top-4 right-4 w-16 h-16 opacity-50" />
+                                 <div className="w-full h-1/3 bg-orange-50 absolute bottom-0"></div>
+                                 
+                                 {/* Character Composition */}
+                                 <div className="relative flex flex-col items-center mt-8">
+                                     <div className="relative">
+                                         <User className="w-20 h-20 text-slate-700 stroke-[1.5]" />
+                                         <HelpCircle className="w-8 h-8 text-orange-500 absolute -top-2 -right-2 animate-bounce" />
+                                     </div>
+                                     <p className="text-[10px] font-mono text-slate-400 mt-2">Arun (Confused)</p>
+                                 </div>
+                             </div>
+                         )}
+
+                         {type === 'intervention' && (
+                             <div className="relative w-full h-full flex items-center justify-center gap-4">
+                                  {/* Elements */}
+                                  <div className="flex flex-col items-center opacity-60">
+                                      <UserPlus className="w-16 h-16 text-slate-400" />
+                                      <p className="text-[10px] font-mono text-slate-300">Meera</p>
+                                  </div>
+                                  
+                                  <ArrowRight className="text-slate-300 w-6 h-6" />
+
+                                  <div className="relative">
+                                      <Tablet className="w-20 h-24 text-emerald-600 fill-emerald-50" />
+                                      <Hand className="w-8 h-8 text-slate-700 absolute bottom-0 right-0 transform translate-y-2 translate-x-2 fill-slate-200" />
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                           <Radio className="w-8 h-8 text-emerald-600/50" />
+                                      </div>
+                                  </div>
+                             </div>
+                         )}
+
+                         {type === 'recall' && (
+                             <div className="relative w-full h-full flex items-center justify-center bg-amber-50/30">
+                                 {/* Radio Active */}
+                                 <Radio className="w-24 h-24 text-amber-600 stroke-[1.5]" />
+                                 
+                                 {/* Waves */}
+                                 <Wifi className="w-12 h-12 text-amber-400 absolute top-4 right-8 rotate-12 animate-pulse" />
+                                 <Music className="w-8 h-8 text-amber-500 absolute bottom-6 left-8 -rotate-12" />
+                                 <Music2 className="w-6 h-6 text-amber-500 absolute top-6 left-12 rotate-45" />
+                                 
+                                 <p className="absolute bottom-2 font-serif italic text-amber-800/40 text-xs">"AIR News..."</p>
+                             </div>
+                         )}
+
+                         {type === 'calm' && (
+                             <div className="relative w-full h-full flex items-center justify-center">
+                                 <div className="absolute inset-0 bg-gradient-to-t from-emerald-50 to-transparent opacity-50"></div>
+                                 
+                                 <div className="relative z-10 flex flex-col items-center">
+                                     <div className="relative">
+                                         <User className="w-20 h-20 text-slate-700 stroke-[1.5]" />
+                                         <Smile className="w-8 h-8 text-emerald-500 fill-white absolute -bottom-1 -right-1" />
+                                     </div>
+                                     <div className="mt-4 flex gap-2">
+                                         <div className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full border border-emerald-200">HR: 72</div>
+                                         <div className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full border border-slate-200">Stable</div>
+                                     </div>
+                                 </div>
+                             </div>
+                         )}
+                         
+                         {/* Upload Overlay (Hover) */}
+                         <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors flex items-center justify-center">
+                            <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                <Upload size={14} /> Upload Sketch
+                            </div>
+                        </div>
+                     </div>
+                 )}
+
+             </div>
+             
+             {/* Caption Area */}
+             <div className="mt-3 flex justify-between items-center border-t border-slate-100 pt-2">
+                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sketch</span>
+                 <span className="text-xs font-serif italic text-slate-600">
+                     {type === 'trigger' && '01: Disorientation'}
+                     {type === 'intervention' && '02: Assistance'}
+                     {type === 'recall' && '03: Connection'}
+                     {type === 'calm' && '04: Resolution'}
+                 </span>
+             </div>
+        </div>
+    )
+}
+
 export const Storyboard: React.FC = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-full overflow-y-auto pb-4">
-      {STORYBOARD_STEPS.map((step, idx) => (
-        <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
-            <div className="mb-4 text-emerald-600 font-bold text-sm uppercase tracking-widest">Step {idx + 1}</div>
-            <h3 className="text-lg font-bold mb-2 text-slate-800">{step.title}</h3>
-            <p className="text-slate-600 font-medium">{step.desc}</p>
-        </div>
-      ))}
+    <div className="h-full w-full bg-[#fdfbf7] p-8 md:p-12 rounded-[2.5rem] overflow-y-auto no-scrollbar border border-stone-200 shadow-sm relative">
+       {/* Background Grid for Sketchbook feel */}
+       <div className="absolute inset-0 bg-[linear-gradient(#e5e7eb_1px,transparent_1px),linear-gradient(90deg,#e5e7eb_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none"></div>
+
+       <div className="max-w-5xl mx-auto relative z-10">
+           
+           {/* Header */}
+           <div className="text-center mb-16 space-y-4">
+               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-widest mb-2 border border-amber-200">
+                  Scenario 01
+               </div>
+               <h2 className="text-5xl font-bold text-stone-900 font-serif tracking-tight">Evening Confusion</h2>
+               <p className="text-xl text-stone-500 font-medium max-w-2xl mx-auto">
+                   A step-by-step narrative of how the Nostalgia Room intervenes during a sundowning episode.
+               </p>
+           </div>
+
+           {/* Story Timeline */}
+           <div className="relative space-y-24 before:content-[''] before:absolute before:left-1/2 before:top-0 before:bottom-0 before:w-px before:bg-stone-300 before:-translate-x-1/2 hidden md:block">
+               
+               {/* Scene 1 */}
+               <div className="relative flex items-center justify-between gap-12 group">
+                   {/* Time Marker */}
+                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-orange-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-bold text-orange-800 text-center leading-tight">5:30<br/>PM</span>
+                   </div>
+                   
+                   {/* Visual Left */}
+                   <div className="w-1/2 pr-12 text-right">
+                       <SketchFrame type="trigger" id="scene_trigger" />
+                   </div>
+                   
+                   {/* Text Right */}
+                   <div className="w-1/2 pl-12">
+                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Trigger</h3>
+                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
+                           "Is it morning? Where is everyone?"
+                       </p>
+                       <p className="text-stone-500 text-sm leading-relaxed">
+                           The sun sets. Shadows lengthen. Arun becomes visibly restless, repeating questions and pacing (Sundowning).
+                       </p>
+                       <div className="flex gap-2 mt-4">
+                            <span className="px-2 py-1 bg-orange-50 text-orange-700 text-xs font-bold uppercase rounded border border-orange-100">Agitation</span>
+                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Disorientation</span>
+                       </div>
+                   </div>
+               </div>
+
+               {/* Scene 2 (Reversed) */}
+               <div className="relative flex items-center justify-between gap-12 group flex-row-reverse">
+                   {/* Time Marker */}
+                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-indigo-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-bold text-indigo-800 text-center leading-tight">5:32<br/>PM</span>
+                   </div>
+                   
+                   {/* Visual Right (now first in flex-row-reverse) */}
+                   <div className="w-1/2 pl-12">
+                       <SketchFrame type="intervention" id="scene_intervention" />
+                   </div>
+                   
+                   {/* Text Left */}
+                   <div className="w-1/2 pr-12 text-right">
+                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Intervention</h3>
+                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
+                           Meera notices. She doesn't correct him. She opens Sanjeevani.
+                       </p>
+                       <p className="text-stone-500 text-sm leading-relaxed">
+                           Instead of arguing ("No, it's evening"), she hands him the tablet showing the Nostalgia Room. She taps the <span className="font-bold text-stone-700">Old Radio</span>.
+                       </p>
+                        <div className="flex gap-2 mt-4 justify-end">
+                            <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase rounded border border-indigo-100">Action</span>
+                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Distraction</span>
+                       </div>
+                   </div>
+               </div>
+
+               {/* Scene 3 */}
+               <div className="relative flex items-center justify-between gap-12 group">
+                   {/* Time Marker */}
+                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-amber-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-bold text-amber-800 text-center leading-tight">5:33<br/>PM</span>
+                   </div>
+                   
+                   {/* Visual Left */}
+                   <div className="w-1/2 pr-12 text-right">
+                        <SketchFrame type="recall" id="scene_recall" />
+                   </div>
+                   
+                   {/* Text Right */}
+                   <div className="w-1/2 pl-12">
+                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Recall</h3>
+                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
+                           "I know this tune... AIR News?"
+                       </p>
+                       <p className="text-stone-500 text-sm leading-relaxed">
+                           The familiar static and 1980s jingle act as an auditory anchor. His pacing stops. He sits down, leaning toward the sound.
+                       </p>
+                       <div className="flex gap-2 mt-4">
+                            <span className="px-2 py-1 bg-amber-50 text-amber-700 text-xs font-bold uppercase rounded border border-amber-100">Memory</span>
+                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Focus</span>
+                       </div>
+                   </div>
+               </div>
+
+                {/* Scene 4 (Reversed) */}
+               <div className="relative flex items-center justify-between gap-12 group flex-row-reverse">
+                   {/* Time Marker */}
+                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-emerald-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-bold text-emerald-800 text-center leading-tight">5:35<br/>PM</span>
+                   </div>
+                   
+                   {/* Visual Right */}
+                   <div className="w-1/2 pl-12">
+                       <SketchFrame type="calm" id="scene_calm" />
+                   </div>
+                   
+                   {/* Text Left */}
+                   <div className="w-1/2 pr-12 text-right">
+                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Calm</h3>
+                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
+                           Breathing stabilizes. A bridge to the past is built.
+                       </p>
+                       <p className="text-stone-500 text-sm leading-relaxed">
+                           Arun is grounded. Meera logs the session as "Positive" in the dashboard. The evening is saved from panic.
+                       </p>
+                       <div className="flex gap-2 mt-4 justify-end">
+                            <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase rounded border border-emerald-100">Success</span>
+                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Relief</span>
+                       </div>
+                   </div>
+               </div>
+
+           </div>
+
+           {/* Mobile View Fallback (Simple Stack) */}
+           <div className="md:hidden space-y-12">
+                {/* Scene 1 */}
+                <div className="flex flex-col gap-4">
+                    <div className="text-center"><span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-bold">5:30 PM</span></div>
+                    <SketchFrame type="trigger" id="mobile_scene_trigger" />
+                    <div>
+                        <h3 className="text-xl font-bold text-stone-800">The Trigger</h3>
+                        <p className="text-stone-600 italic">"Is it morning? Where is everyone?"</p>
+                    </div>
+                </div>
+                 {/* Scene 2 */}
+                <div className="flex flex-col gap-4">
+                    <div className="text-center"><span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold">5:32 PM</span></div>
+                    <SketchFrame type="intervention" id="mobile_scene_intervention" />
+                    <div>
+                        <h3 className="text-xl font-bold text-stone-800">The Intervention</h3>
+                        <p className="text-stone-600 italic">Meera acts. One tap.</p>
+                    </div>
+                </div>
+           </div>
+
+       </div>
     </div>
   );
 };
