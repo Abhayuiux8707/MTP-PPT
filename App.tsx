@@ -1,7 +1,8 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { NAV_TABS } from './constants';
-import { Overview, CognitiveMapping, Personas, DesignHypotheses, LevelFlow, Wireframes, TherapeuticBenchmarking, SensoryTriggerView, ExperienceBenchmarkingView, EIMCLoopView } from './components/PresentationViews';
+import { Overview, CognitiveMapping, Personas, DesignHypotheses, LevelFlow, Wireframes, TherapeuticBenchmarking, SensoryTriggerView, ExperienceBenchmarkingView, EIMCLoopView, SensoryHierarchyView } from './components/PresentationViews';
 import { JourneyMap, Storyboard, Benchmarking } from './components/Visualizations';
 import ChatPanel from './components/ChatPanel';
 import { Flower } from 'lucide-react';
@@ -22,6 +23,7 @@ const App: React.FC = () => {
       case 'journey': return <JourneyMap />;
       case 'hypotheses': return <DesignHypotheses />;
       case 'eimc': return <EIMCLoopView />;
+      case 'sensory-hierarchy': return <SensoryHierarchyView />;
       case 'benchmarking-old': return <Benchmarking />; // Kept as fallback if needed
       case 'levelflow': return <LevelFlow />;
       case 'wireframes': return <Wireframes />;

@@ -1,6 +1,5 @@
 
-
-import { Brain, Music, Image as ImageIcon, Wind, Hand, Heart, Activity, Users, Layout, MapIcon, MessageCircle, FileText, Smartphone, Eye, Mic, Puzzle, ClipboardList, BookOpen, Smile, Zap, Sun, CloudRain, Coffee, Feather, Target, Compass, Anchor, AlertTriangle, Monitor, MousePointer2, Clock, Search, RefreshCw, Fingerprint } from 'lucide-react';
+import { Brain, Music, Image as ImageIcon, Wind, Hand, Heart, Activity, Users, Layout, MapIcon, MessageCircle, FileText, Smartphone, Eye, Mic, Puzzle, ClipboardList, BookOpen, Smile, Zap, Sun, CloudRain, Coffee, Feather, Target, Compass, Anchor, AlertTriangle, Monitor, MousePointer2, Clock, Search, RefreshCw, Fingerprint, Layers, Glasses } from 'lucide-react';
 
 export const NAV_TABS = [
   { id: 'overview', label: 'Overview', icon: Layout },
@@ -10,6 +9,7 @@ export const NAV_TABS = [
   { id: 'benchmarking', label: 'Experience Benchmarking', icon: Target },
   { id: 'hypotheses', label: 'Design Hypotheses', icon: Heart },
   { id: 'eimc', label: 'The EIMC Loop', icon: RefreshCw },
+  { id: 'sensory-hierarchy', label: 'Sensory Hierarchy', icon: Layers },
   { id: 'personas', label: 'Personas', icon: Users },
   { id: 'storyboard', label: 'Scenario', icon: FileText },
   { id: 'journey', label: 'Journey Map', icon: Activity },
@@ -114,12 +114,42 @@ export const MATRIX_STRATEGIC_INSIGHTS = [
 ];
 
 export const STORYBOARD_STEPS = [
-  { title: 'The Confusion', desc: '5:30 PM. Arun becomes restless and forgets where he is (Sundowning).', icon: 'cloud-drizzle' },
-  { title: 'The Intervention', desc: 'Meera notices the signs. She hands him the tablet with Sanjeevani open.', icon: 'tablet' },
-  { title: 'The Anchor', desc: 'Arun sees the virtual "Old Radio". It looks just like his father’s.', icon: 'radio' },
-  { title: 'The Trigger', desc: 'He taps it. Static noise fades into a classic AIR weather report.', icon: 'volume-2' },
-  { title: 'The Recall', desc: 'Arun smiles. "I remember this tune." Agitation subsides.', icon: 'smile' },
-  { title: 'The Log', desc: 'Meera tags the session as "Positive". The system records the mood.', icon: 'check-circle' },
+  { 
+    title: 'The Confusion', 
+    desc: 'Real World: Arun (Elderly Indian man, white beard, glasses, white kurta) is pacing anxiously in a living room. Meera (Elderly Indian woman, grey hair bun, cotton saree) looks worried.', 
+    icon: 'cloud-drizzle',
+    type: 'character' 
+  },
+  { 
+    title: 'The Intervention', 
+    desc: 'Real World: Meera (in saree) gently places a white VR headset on Arun (in kurta). Arun looks confused but passive.', 
+    icon: 'glasses',
+    type: 'character'
+  },
+  { 
+    title: 'The VR Environment', 
+    desc: 'VR POV (Augmented Reality): Inside a warm, sunlit virtual Indian living room (1970s decor). A realistic vintage wooden Murphy Radio sits on a table. Minimal, warm UI text floats gently above it saying "Touch Radio". No sci-fi elements.', 
+    icon: 'radio',
+    type: 'ui'
+  },
+  { 
+    title: 'The Interaction', 
+    desc: 'VR POV (Augmented Reality): A wrinkled elderly hand reaches out to tune the vintage radio knob. Warm, golden ripples of light (visualizing sound) emanate gently. The room feels cozy. Simple text overlay: "Playing: AIR 1975".', 
+    icon: 'hand',
+    type: 'ui'
+  },
+  { 
+    title: 'The Memory Activation', 
+    desc: 'VR POV (Memory Layer): The living room wall transforms softly into a large, warm projection of a happy family memory (sepia photo). The environment is peaceful and nostalgic. Soft UI overlay indicates "Memory Unlocked". Realistic rendering.', 
+    icon: 'smile',
+    type: 'ui'
+  },
+  { 
+    title: 'The Dashboard', 
+    desc: 'UI Wireframe: Close up of Meera’s tablet screen. The "Sanjeevani Caregiver App" shows a green checkmark "Mood Stabilized" and a graph going down.', 
+    icon: 'check-circle',
+    type: 'ui'
+  },
 ];
 
 export const COLORS = {
@@ -448,6 +478,22 @@ export const EIMC_MAPPING = [
   { phase: "Emotion", level: "Level 2 (Garden)", mechanic: "Calm nature → emotional softening" },
   { phase: "Identity Activation", level: "Level 3 (Identity Moment)", mechanic: "Childhood scenes → “This was me”" },
   { phase: "Memory & Calm", level: "Level 4 + Level 5", mechanic: "Recall during puzzle + caregiver notes" }
+];
+
+export const SENSORY_HIERARCHY_DATA = [
+  { sense: 'Smell (Olfaction)', strength: 'Very High', cost: 'Very High', feasibility: 'Low', notes: 'Needs hardware diffusers', class: 'opacity-50 grayscale', icon: Wind, color: 'slate' },
+  { sense: 'Sound (Auditory)', strength: 'High', cost: 'Low', feasibility: 'Very High', notes: 'Best for nostalgia & identity', class: 'ring-4 ring-emerald-400 bg-emerald-50 scale-105 shadow-xl', icon: Music, color: 'emerald' },
+  { sense: 'Visuals (Sight)', strength: 'Medium', cost: 'Low', feasibility: 'Very High', notes: 'Required baseline', class: 'ring-2 ring-emerald-200 bg-emerald-50/50 shadow-md', icon: Eye, color: 'blue' },
+  { sense: 'Touch (Haptics)', strength: 'Medium', cost: 'Medium', feasibility: 'Medium', notes: 'Optional', class: '', icon: Hand, color: 'amber' },
+  { sense: 'Taste (Gustatory)', strength: 'High', cost: 'Very High', feasibility: 'Very Low', notes: 'Not relevant', class: 'opacity-50 grayscale', icon: Coffee, color: 'rose' },
+];
+
+export const COST_IMPACT_DATA = [
+  { sense: 'Smell', memory: 'Very High', cost: 'Very High', feasibility: 'Low', notes: 'Impractical (Hardware)', status: 'fail' },
+  { sense: 'Sound', memory: 'High', cost: 'Low', feasibility: 'Very High', notes: 'Core Mechanic', status: 'success' },
+  { sense: 'Visuals', memory: 'Medium', cost: 'Low', feasibility: 'Very High', notes: 'Core Mechanic', status: 'success' },
+  { sense: 'Touch', memory: 'Medium', cost: 'Medium', feasibility: 'Medium', notes: 'Nice to have', status: 'neutral' },
+  { sense: 'Taste', memory: 'High', cost: 'Very High', feasibility: 'Very Low', notes: 'Not feasible', status: 'fail' },
 ];
 
 // --- COMPLEX DATA (Kept for reference if needed, but unused in simple view) ---

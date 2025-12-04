@@ -1,8 +1,8 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceArea, ReferenceLine, Customized, ZAxis } from 'recharts';
-import { JOURNEY_DATA, EXPERIENCE_MATRIX_POINTS, STORYBOARD_STEPS, THERAPY_TRIANGLE_DATA, SENSORY_TRIGGER_DATA, HYPOTHESIS_NODES, HYPOTHESIS_LINKS, THERAPY_RADAR_DATA } from '../constants';
-import { AlertCircle, Zap, Smile, CheckCircle, Tablet, Radio, Volume2, CloudDrizzle, CloudLightning, Sun, Activity, Upload, Image as ImageIcon, Music, Heart, Eye, Hand, Wind, Brain, User, ArrowUpRight, Target, Star, Hexagon, ZoomIn, ZoomOut, RotateCcw, Move, MousePointer2, UserCircle, Clock, AlertTriangle, Check, ArrowRight, MessageSquare, Sunset, Coffee, Frown, Mic, HelpCircle, UserPlus, Music2, Wifi, Trash2, Wand2, Loader2, Glasses, MousePointerClick, Home } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Area, ComposedChart, Line, ReferenceArea } from 'recharts';
+import { JOURNEY_DATA, EXPERIENCE_MATRIX_POINTS, STORYBOARD_STEPS, THERAPY_TRIANGLE_DATA, SENSORY_TRIGGER_DATA, THERAPY_RADAR_DATA } from '../constants';
+import { AlertCircle, Zap, Smile, CheckCircle, Tablet, Radio, Volume2, CloudDrizzle, Activity, Image as ImageIcon, Music, Heart, Wind, Brain, User, Target, Layers, Ban, Wand2, Loader2, MousePointerClick, AlertTriangle, UserCircle, Hand, Coffee, Glasses } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 const COLOR_MAP: Record<string, string> = {
@@ -15,111 +15,349 @@ const COLOR_MAP: Record<string, string> = {
   slate: '#64748b',
 };
 
-// ... (Existing components: JourneyMap, SensoryConcentricMap, etc. remain unchanged) ...
+const ADVANCED_JOURNEY_DATA = [
+  {
+    stage: 'Stage 1: Before',
+    title: 'Confused Evening',
+    subtitle: 'Sundowning Onset',
+    emotionScore: 2,
+    hrValue: 95,
+    hr: '95 bpm',
+    emoji: '😫',
+    actions: ['Pacing', 'Repetitive questions', 'Window gazing'],
+    pain: ['High cognitive load', 'Disorientation', 'Panic (light transition)'],
+    cognitive: 'Impaired orientation, Short-term failure',
+    emotional: 'High Anxiety, Fear, Loss of control',
+    physio: 'Elevated HR, Irregular breathing',
+    ux_req: 'Fast access, Zero text',
+    marker: null
+  },
+  {
+    stage: 'Stage 2: During',
+    title: 'Intervention',
+    subtitle: 'Launching Sanjeevani',
+    emotionScore: 4,
+    hrValue: 88,
+    hr: '88 bpm',
+    emoji: '😰',
+    actions: ['Caregiver reaches for tablet', 'Opens App', 'Selects "Radio"'],
+    pain: ['Caregiver stress', 'Time pressure', 'Digital friction risk'],
+    cognitive: 'Confusion loop, Cannot follow logic',
+    emotional: 'Ambivalent, Slight anxiety reduction',
+    physio: 'Mild shift in facial tension',
+    ux_req: 'Large targets, Auto-play',
+    marker: null
+  },
+  {
+    stage: 'Stage 3: Interaction',
+    title: 'Sensory Cue',
+    subtitle: 'Object Tap',
+    emotionScore: 7,
+    hrValue: 78,
+    hr: '78 bpm',
+    emoji: '😮',
+    actions: ['Hears AIR static', 'Sees glowing radio', 'Focuses attention'],
+    pain: ['Overstimulation risk', 'Cognitive fatigue risk'],
+    cognitive: 'Limbic processing activated, Hippocampus bypass',
+    emotional: 'Micro-recognition, Softening',
+    physio: 'Shoulders relax, Pupil dilation',
+    ux_req: 'Zero-scroll, Soft glow',
+    marker: 'TTS: Time to Smile (8-20s)'
+  },
+  {
+    stage: 'Stage 4: Emotion',
+    title: 'Recognition',
+    subtitle: 'Identity Moment',
+    emotionScore: 9,
+    hrValue: 72,
+    hr: '72 bpm',
+    emoji: '🥹',
+    actions: ['Sits down', 'Smiles gently', 'Leans in'],
+    pain: ['Memory fragmentation', 'Emotional fragility'],
+    cognitive: 'Identity activation, Long-term retrieval',
+    emotional: 'Nostalgia, Warmth, Clarity',
+    physio: 'Slower breathing, Relaxed muscles',
+    ux_req: 'Empathetic microcopy',
+    marker: 'HRV Normalization (30-60s)'
+  },
+  {
+    stage: 'Stage 5: After',
+    title: 'Calm State',
+    subtitle: 'Post-Intervention',
+    emotionScore: 8,
+    hrValue: 68,
+    hr: '68 bpm',
+    emoji: '😌',
+    actions: ['Rests calmly', 'Caregiver logs session', 'Peaceful sitting'],
+    pain: ['Temporary duration', 'Need for routine'],
+    cognitive: 'Stability, Improved grounding',
+    emotional: 'Relief, Safety, Connection',
+    physio: 'Stable HR, Smooth breathing',
+    ux_req: 'Auto-save insights',
+    marker: null
+  },
+];
+
+const EmojiLabel = (props: any) => {
+  const { x, y, value } = props;
+  return (
+    <g>
+      <circle cx={x} cy={y - 25} r={20} fill="white" stroke="#e2e8f0" strokeWidth={2} style={{filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.1))'}} />
+      <text x={x} y={y - 25} dy={7} textAnchor="middle" fontSize={22}>
+        {value}
+      </text>
+    </g>
+  );
+};
 
 export const JourneyMap: React.FC = () => {
-  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [activeStage, setActiveStage] = useState<number | null>(null);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm flex-grow flex flex-col">
-        <div className="flex items-center justify-between mb-8">
-            <h3 className="text-3xl font-bold text-slate-800 flex items-center gap-4">
-               <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600"><Activity size={28} /></div>
-               User Journey: The "Sundowning" Episode
-            </h3>
-            <div className="flex gap-6 text-sm font-bold text-slate-500">
-                <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500"></span> Positive Peak</span>
-                <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-slate-300"></span> Baseline</span>
+    <div className="h-full flex flex-col bg-white rounded-[2.5rem] border-2 border-slate-900 shadow-2xl overflow-hidden">
+      <div className="p-8 border-b-2 border-slate-200 flex justify-between items-end bg-slate-50 flex-shrink-0">
+          <div>
+            <div className="flex items-center gap-4 mb-3">
+                <div className="p-3 bg-indigo-700 rounded-xl text-white shadow-lg"><Activity size={32} /></div>
+                <span className="text-base font-extrabold text-indigo-800 uppercase tracking-widest bg-indigo-100 px-4 py-1.5 rounded-full border border-indigo-200">Clinical UX Model</span>
             </div>
-        </div>
-        
-        {/* Graph Container */}
-        <div className="relative flex-grow flex flex-col justify-center">
-            <div className="h-64 w-full relative mb-12">
-                {/* SVG Curve */}
-                <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#94a3b8" />
-                    <stop offset="40%" stopColor="#fbbf24" />
-                    <stop offset="70%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#34d399" />
-                    </linearGradient>
-                </defs>
-                <path 
-                    d="M 50 200 C 200 200, 300 180, 500 100 S 800 40, 1100 60 L 1400 60" 
-                    fill="none" 
-                    stroke="url(#lineGradient)" 
-                    strokeWidth="8" 
-                    strokeLinecap="round"
-                />
-                </svg>
+            <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">User Journey Map</h2>
+            <p className="text-2xl text-slate-600 font-bold mt-2">Sundowning Episode → Level 1 Intervention → Recovery</p>
+          </div>
+          <div className="text-right">
+             <div className="flex gap-8 text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-2 bg-white px-6 py-3 rounded-xl border border-slate-200 shadow-sm">
+                 <span className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-rose-500 ring-2 ring-rose-200"></span> High Anxiety</span>
+                 <span className="flex items-center gap-3"><span className="w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></span> Stable Calm</span>
+             </div>
+          </div>
+      </div>
 
-                {/* Nodes */}
-                <div className="absolute inset-0 grid grid-cols-5 items-center">
-                    {JOURNEY_DATA.map((step, idx) => {
-                        const positions = ['80%', '40%', '20%', '15%', '20%']; 
-                        return (
-                            <div key={idx} className="flex justify-center h-full relative pointer-events-none">
-                                <div 
-                                    style={{ top: positions[idx] }} 
-                                    className={`absolute w-8 h-8 rounded-full border-4 border-white shadow-lg cursor-pointer pointer-events-auto transition-all hover:scale-125 ${activeStep === idx ? 'scale-125 ring-4 ring-emerald-200' : ''}`}
-                                    onMouseEnter={() => setActiveStep(idx)}
-                                    onMouseLeave={() => setActiveStep(null)}
-                                >
-                                    <div className={`w-full h-full rounded-full ${idx > 2 ? 'bg-emerald-500' : idx === 2 ? 'bg-yellow-500' : 'bg-slate-400'}`}></div>
-                                </div>
+      <div className="flex-grow overflow-y-auto scroll-smooth no-scrollbar p-10 bg-[#f8fafc]">
+         <div className="h-[450px] w-full mb-12 relative bg-white rounded-3xl p-6 border border-slate-200 shadow-md">
+             <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-sm font-extrabold text-slate-400 uppercase tracking-widest">
+                     Clinical Correlation: Emotion vs. Physiology
+                 </h3>
+                 <div className="flex gap-4">
+                     <div className="flex items-center gap-2">
+                         <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+                         <span className="text-xs font-bold text-slate-500">Emotional State</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                         <div className="w-6 h-1 bg-rose-500 rounded-full border-t border-dashed border-white"></div>
+                         <span className="text-xs font-bold text-slate-500">Heart Rate</span>
+                     </div>
+                 </div>
+             </div>
+             
+             <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={ADVANCED_JOURNEY_DATA} margin={{ top: 40, right: 20, left: 20, bottom: 20 }}>
+                    <defs>
+                        <linearGradient id="emotionGradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.6}/>
+                            <stop offset="40%" stopColor="#fbbf24" stopOpacity={0.6}/>
+                            <stop offset="100%" stopColor="#10b981" stopOpacity={0.8}/>
+                        </linearGradient>
+                         <linearGradient id="fillGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity={0.2}/> 
+                            <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05}/> 
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} stroke="#e2e8f0" strokeWidth={1} />
+                    <XAxis dataKey="title" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 14, fontWeight: 700, dy: 15 }} />
+                    <YAxis yAxisId="left" orientation="left" domain={[0, 10]} hide />
+                    <YAxis yAxisId="right" orientation="right" domain={[60, 110]} tick={{ fill: '#f43f5e', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} unit=" bpm"/>
+                    <Tooltip content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                    <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-2xl border-2 border-slate-700 text-base min-w-[200px]">
+                                        <div className="flex items-center gap-3 mb-3 border-b border-slate-700 pb-2">
+                                            <span className="text-2xl">{data.emoji}</span>
+                                            <p className="font-bold text-xl">{data.title}</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-emerald-400 font-bold text-sm">Emotion</span>
+                                                <span className="font-mono text-white text-lg">{data.emotionScore}/10</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-rose-400 font-bold text-sm">Heart Rate</span>
+                                                <span className="font-mono text-white text-lg">{data.hr}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        }}
+                    />
+                    <Area yAxisId="left" type="monotone" dataKey="emotionScore" stroke="url(#emotionGradient)" fill="url(#fillGradient)" strokeWidth={6} activeDot={{ r: 10, strokeWidth: 0, fill: '#10b981' }}>
+                        <LabelList dataKey="emoji" content={<EmojiLabel />} />
+                    </Area>
+                    <Line yAxisId="right" type="monotone" dataKey="hrValue" stroke="#f43f5e" strokeWidth={4} strokeDasharray="10 10" dot={{ r: 6, fill: '#f43f5e', stroke: '#fff', strokeWidth: 2 }} />
+                </ComposedChart>
+             </ResponsiveContainer>
+         </div>
+
+         <div className="grid grid-cols-5 gap-6 pb-16">
+             {ADVANCED_JOURNEY_DATA.map((stage, i) => (
+                 <div key={i} className={`flex flex-col gap-4 group transition-all duration-300 ${activeStage === i ? 'scale-[1.02] -translate-y-2' : ''}`} onMouseEnter={() => setActiveStage(i)} onMouseLeave={() => setActiveStage(null)}>
+                     <div className={`p-6 rounded-3xl border-t-8 shadow-md h-full flex flex-col ${i === 0 ? 'bg-rose-50 border-rose-500' : i === 4 ? 'bg-emerald-50 border-emerald-500' : 'bg-white border-slate-400'}`}>
+                         <div className="mb-6">
+                            <div className="flex justify-between items-start">
+                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{stage.stage}</span>
+                                <span className="text-2xl">{stage.emoji}</span>
                             </div>
-                        )
-                    })}
-                </div>
-            </div>
-
-            {/* Labels */}
-            <div className="grid grid-cols-5 gap-8">
-                {JOURNEY_DATA.map((step, idx) => (
-                    <div key={idx} className={`text-center transition-opacity duration-300 ${activeStep !== null && activeStep !== idx ? 'opacity-30' : 'opacity-100'}`}>
-                        <div className="mb-4">
-                             <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold text-slate-500 uppercase tracking-widest">{step.stage}</span>
-                        </div>
-                        <h4 className="font-bold text-slate-800 text-xl mb-4 leading-tight">{step.action}</h4>
-                        <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 mb-2">
-                            <p className="text-xs font-bold text-rose-500 uppercase mb-1">Pain Point</p>
-                            <p className="text-sm font-medium text-slate-700">{step.pain}</p>
-                        </div>
-                         <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                            <p className="text-xs font-bold text-emerald-500 uppercase mb-1">Opportunity</p>
-                            <p className="text-sm font-medium text-slate-700">{step.opp}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+                            <h3 className="text-2xl font-black text-slate-900 leading-tight mt-2">{stage.title}</h3>
+                            <p className="text-sm font-bold text-slate-500 italic mt-1">{stage.subtitle}</p>
+                         </div>
+                         <div className="bg-blue-50 p-5 rounded-2xl border-2 border-blue-100 space-y-4 mb-4">
+                             <div className="flex items-center gap-2 border-b-2 border-blue-100 pb-2">
+                                <Brain size={20} className="text-blue-600" />
+                                <span className="text-xs font-black text-blue-700 uppercase tracking-wider">Cognitive</span>
+                             </div>
+                             <p className="text-sm text-slate-800 font-bold leading-snug">{stage.cognitive}</p>
+                             <div className="flex items-center gap-2 border-b-2 border-blue-100 pb-2 pt-2">
+                                <Heart size={20} className="text-rose-500" />
+                                <span className="text-xs font-black text-rose-700 uppercase tracking-wider">Physio</span>
+                             </div>
+                             <div className="bg-white px-3 py-2 rounded-lg border border-blue-100 shadow-sm flex items-center justify-between">
+                                 <span className="text-sm font-black text-slate-700 block">{stage.hr}</span>
+                                 <Activity size={16} className={i < 2 ? "text-rose-500 animate-pulse" : "text-emerald-500"} />
+                             </div>
+                         </div>
+                         <div className="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 space-y-4 flex-grow">
+                             <div className="flex items-center gap-2 border-b-2 border-slate-200 pb-2">
+                                <MousePointerClick size={20} className="text-slate-600" />
+                                <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Action</span>
+                             </div>
+                             <ul className="text-sm text-slate-700 font-bold space-y-2">
+                                 {stage.actions.map((act, idx) => <li key={idx} className="leading-tight">• {act}</li>)}
+                             </ul>
+                             <div className="mt-4 pt-4 border-t-2 border-slate-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <AlertTriangle size={18} className="text-amber-600" />
+                                    <span className="text-xs font-black text-amber-700 uppercase tracking-wider">Limitations</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {stage.pain.map((p, idx) => (
+                                        <span key={idx} className="inline-block bg-amber-100 text-amber-900 text-[10px] font-black px-2 py-1 rounded border border-amber-200 uppercase leading-tight">
+                                            {p}
+                                        </span>
+                                    ))}
+                                </div>
+                             </div>
+                             <div className="mt-4 pt-2">
+                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">UX Requirement</span>
+                                 <p className="text-sm font-bold text-indigo-700 bg-indigo-50 p-2 rounded-lg border border-indigo-100 border-l-4 border-l-indigo-500">
+                                     {stage.ux_req}
+                                 </p>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             ))}
+         </div>
+         <div className="mt-8 bg-slate-900 text-white p-10 rounded-[2.5rem] flex items-center gap-8 shadow-2xl border-4 border-slate-800">
+             <div className="p-6 bg-emerald-500/20 rounded-3xl border-2 border-emerald-500/50 flex-shrink-0">
+                 <CheckCircle size={48} className="text-emerald-400" />
+             </div>
+             <div>
+                 <p className="text-sm font-black text-emerald-400 uppercase tracking-[0.2em] mb-4">Scientific Summary</p>
+                 <p className="text-3xl font-bold leading-relaxed font-serif">
+                     “The Sanjeevani intervention converts a <span className="text-rose-400 underline decoration-2 decoration-rose-400/30 underline-offset-4">declining emotional state</span> into a <span className="text-emerald-400 underline decoration-2 decoration-emerald-400/30 underline-offset-4">stabilized calm state</span> within 60–120 seconds.”
+                 </p>
+             </div>
+         </div>
       </div>
     </div>
   );
 };
+
+export const SensoryImpactChart: React.FC = () => {
+    const data = [
+        { name: 'Smell', x: 20, y: 95, z: 100, status: 'excluded', fill: '#f43f5e', label: 'Strongest but Hard' },
+        { name: 'Taste', x: 10, y: 70, z: 50, status: 'excluded', fill: '#f43f5e', label: 'Not Scalable' },
+        { name: 'Touch', x: 50, y: 50, z: 60, status: 'optional', fill: '#f59e0b', label: 'Optional' },
+        { name: 'Visuals', x: 90, y: 60, z: 80, status: 'included', fill: '#3b82f6', label: 'Required Base' },
+        { name: 'Sound', x: 95, y: 90, z: 90, status: 'included', fill: '#10b981', label: 'Sweet Spot' },
+    ];
+
+    return (
+        <div className="h-full w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 30 }}>
+                    <defs>
+                        <linearGradient id="gradSweetSpot" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#ecfdf5" stopOpacity={0.8} /> 
+                            <stop offset="100%" stopColor="#d1fae5" stopOpacity={0.2} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={true} />
+                    <XAxis type="number" dataKey="x" name="Feasibility" domain={[0, 100]} tick={false} axisLine={{ stroke: '#94a3b8', strokeWidth: 2 }} label={{ value: 'Implementation Feasibility →', position: 'bottom', fill: '#64748b', fontSize: 13, fontWeight: 700, offset: 0 }} />
+                    <YAxis type="number" dataKey="y" name="Memory Impact" domain={[0, 100]} tick={false} axisLine={{ stroke: '#94a3b8', strokeWidth: 2 }} label={{ value: 'Memory Trigger Strength →', angle: -90, position: 'left', fill: '#64748b', fontSize: 13, fontWeight: 700, offset: 0 }} />
+                    <ReferenceArea x1={60} x2={100} y1={60} y2={100} fill="url(#gradSweetSpot)" stroke="none" />
+                    <ReferenceArea x1={60} x2={100} y1={60} y2={100} stroke="none" label={{ value: "PHASE 1 CORE", position: 'insideTopRight', fill: '#059669', fontSize: 16, fontWeight: 900, dx: -10, dy: 10 }} />
+                    <ReferenceArea x1={0} x2={50} y1={60} y2={100} stroke="none" label={{ value: "PHASE 2 (HARDWARE)", position: 'insideTopLeft', fill: '#e11d48', fontSize: 14, fontWeight: 700, dx: 10, dy: 10 }} />
+                    <ReferenceArea x1={0} x2={100} y1={0} y2={50} stroke="none" label={{ value: "LOW IMPACT ZONE", position: 'insideBottom', fill: '#94a3b8', fontSize: 14, fontWeight: 700 }} />
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                    <div className="bg-slate-900 text-white p-4 rounded-xl shadow-xl border border-slate-700 z-50">
+                                        <p className="font-bold text-lg mb-1" style={{color: data.fill}}>{data.name}</p>
+                                        <p className="text-xs text-slate-300 uppercase tracking-widest font-bold mb-2">{data.label}</p>
+                                        <div className="space-y-1 text-xs font-mono text-slate-400">
+                                            <div>Impact: {data.y}%</div>
+                                            <div>Feasibility: {data.x}%</div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        }}
+                    />
+                    <Scatter data={data} shape={(props: any) => {
+                        const { cx, cy, fill, payload } = props;
+                        const isIncluded = payload.status === 'included';
+                        return (
+                            <g className="cursor-pointer hover:scale-110 transition-transform duration-300">
+                                {isIncluded && (
+                                    <circle cx={cx} cy={cy} r={35} fill={fill} fillOpacity={0.2} className="animate-pulse" />
+                                )}
+                                <circle cx={cx} cy={cy} r={isIncluded ? 25 : 18} fill={fill} stroke="white" strokeWidth={3} className="shadow-lg drop-shadow-md" />
+                                <text x={cx} y={cy + (isIncluded ? 40 : 32)} textAnchor="middle" fill={fill} fontWeight={800} fontSize={12}>
+                                    {payload.name}
+                                </text>
+                                {isIncluded && (
+                                    <CheckCircle x={cx + 12} y={cy - 25} size={16} className="text-emerald-600 fill-white" />
+                                )}
+                                {payload.status === 'excluded' && (
+                                    <Ban x={cx + 8} y={cy - 18} size={14} className="text-rose-800 fill-white/80" />
+                                )}
+                            </g>
+                        );
+                    }} />
+                </ScatterChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
 
 export const SensoryConcentricMap: React.FC = () => {
   const [activeSense, setActiveSense] = useState<number | null>(null);
 
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-visible">
-      
-      {/* Background Atmosphere Rings - Centered via Transform */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-slate-100 rounded-full opacity-50 animate-[spin_60s_linear_infinite]"></div>
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] border border-slate-200 rounded-full opacity-60"></div>
       
-      {/* Interactive Core */}
       <div className="relative w-[240px] h-[240px] z-20 flex-shrink-0">
-         {/* Center Human Node */}
          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white rounded-full shadow-2xl flex items-center justify-center z-30 border-4 border-slate-50 group">
              <UserCircle size={60} className={`text-slate-300 transition-colors duration-500 ${activeSense !== null ? `text-${SENSORY_TRIGGER_DATA[activeSense].color}-500` : ''}`} />
-             {/* Neural Pulse Animation */}
              <div className={`absolute inset-0 rounded-full border-4 opacity-0 transition-all duration-500 ${activeSense !== null ? `border-${SENSORY_TRIGGER_DATA[activeSense].color}-400 scale-125 opacity-100 animate-ping` : ''}`}></div>
              
-             {/* Dynamic Center Text */}
              {activeSense !== null && (
                  <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap animate-in slide-in-from-top-2">
                      {SENSORY_TRIGGER_DATA[activeSense].type} Input
@@ -127,7 +365,6 @@ export const SensoryConcentricMap: React.FC = () => {
              )}
          </div>
 
-         {/* Quadrants */}
          <div className="w-full h-full rounded-full overflow-hidden relative shadow-inner bg-slate-50 border border-slate-200">
              {SENSORY_TRIGGER_DATA.map((trigger, idx) => (
                  <div 
@@ -156,15 +393,12 @@ export const SensoryConcentricMap: React.FC = () => {
          </div>
       </div>
 
-      {/* Floating Detail Cards */}
       {SENSORY_TRIGGER_DATA.map((trigger, idx) => {
          const isLeft = idx % 2 === 0;
          const isTop = idx < 2;
-         
          const posStyle: React.CSSProperties = {};
          if (isTop) posStyle.bottom = '50%'; else posStyle.top = '50%';
          if (isLeft) posStyle.right = '50%'; else posStyle.left = '50%';
-         
          const margin = '130px';
          if (isTop) posStyle.marginBottom = margin; else posStyle.marginTop = margin;
          if (isLeft) posStyle.marginRight = margin; else posStyle.marginLeft = margin;
@@ -190,7 +424,6 @@ export const SensoryConcentricMap: React.FC = () => {
                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{trigger.mechanism}</p>
                      </div>
                  </div>
-                 
                  <div className="space-y-2">
                      {trigger.examples.map((ex, i) => (
                          <div key={i} className="flex items-center gap-2 text-sm font-bold text-slate-600">
@@ -201,783 +434,270 @@ export const SensoryConcentricMap: React.FC = () => {
              </div>
          );
       })}
-
     </div>
   )
 };
 
-// --- IMAGE COMPRESSION UTILITY ---
-const compressImage = (dataUrl: string, quality = 0.6, maxWidth = 800): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > maxWidth) {
-                height = Math.round((height * maxWidth) / width);
-                width = maxWidth;
+export const CrossModalMap: React.FC = () => {
+  const senses = [
+    { id: 'sound', label: 'Sound', sub: 'Primary Trigger', status: 'included', color: 'emerald', icon: Music },
+    { id: 'visual', label: 'Visuals', sub: 'Scene Setter', status: 'included', color: 'blue', icon: ImageIcon },
+    { id: 'touch', label: 'Touch', sub: 'Grounding', status: 'optional', color: 'amber', icon: Hand },
+    { id: 'smell', label: 'Smell', sub: 'Deep Memory', status: 'excluded', color: 'slate', icon: Wind },
+    { id: 'taste', label: 'Taste', sub: 'Comfort', status: 'excluded', color: 'slate', icon: Coffee },
+  ];
+
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-white rounded-3xl relative overflow-hidden p-8 border border-slate-200 shadow-sm">
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-slate-100 rounded-full z-0 opacity-60"></div>
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-slate-100 rounded-full z-0 opacity-60"></div>
+
+       <div className="z-10 mb-10 relative">
+           <div className="w-40 h-40 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-2xl border-8 border-slate-100 relative z-20 hover:scale-105 transition-transform duration-300">
+               <Brain size={48} className="text-emerald-400 mb-2" />
+               <span className="text-white font-bold text-sm tracking-widest uppercase">Memory</span>
+               <span className="text-slate-400 text-[10px] font-bold uppercase">Activation</span>
+           </div>
+           <div className="absolute top-full left-1/2 -translate-x-1/2 h-10 w-0.5 bg-slate-200 z-0"></div>
+       </div>
+
+       <div className="flex justify-center gap-6 w-full z-20 flex-wrap">
+           {senses.map((sense) => (
+               <div key={sense.id} className={`
+                   flex flex-col items-center justify-center w-36 h-48 rounded-2xl border-2 transition-all duration-300 relative group cursor-default
+                   ${sense.status === 'included' 
+                        ? `bg-white border-${sense.color}-200 shadow-lg scale-105 hover:-translate-y-2 ring-1 ring-${sense.color}-100` 
+                        : 'bg-slate-50 border-slate-200 opacity-70 grayscale-[0.8] hover:grayscale-0 hover:opacity-100 hover:bg-white'}
+               `}>
+                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-200 rounded-full border-2 border-white z-10"></div>
+                   <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-colors ${sense.status === 'included' ? `bg-${sense.color}-50 text-${sense.color}-600` : 'bg-slate-100 text-slate-400'}`}>
+                       <sense.icon size={28} />
+                   </div>
+                   <h4 className="font-bold text-slate-800 text-lg">{sense.label}</h4>
+                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-3">{sense.sub}</p>
+                   
+                   <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1
+                       ${sense.status === 'included' ? 'bg-emerald-100 text-emerald-700' : 
+                         sense.status === 'excluded' ? 'bg-slate-100 text-slate-500' : 'bg-amber-100 text-amber-700'}
+                   `}>
+                       {sense.status === 'included' && <CheckCircle size={10} />}
+                       {sense.status === 'excluded' && <Ban size={10} />}
+                       {sense.status === 'optional' && <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>}
+                       {sense.status === 'included' ? 'Core' : sense.status === 'excluded' ? 'Later' : 'Maybe'}
+                   </div>
+               </div>
+           ))}
+       </div>
+       
+       <p className="absolute bottom-6 text-slate-400 text-xs font-medium uppercase tracking-widest">
+           Cross-Modal Integration Pathways
+       </p>
+    </div>
+  )
+}
+
+export const SketchFrame: React.FC<{type: string, id: string, promptContext: string}> = ({type, id, promptContext}) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(() => {
+    // Load persisted image on mount
+    return localStorage.getItem(`sketch_${id}`);
+  });
+  const [loading, setLoading] = useState(false);
+
+  const generateSketch = async () => {
+    if (!process.env.API_KEY) return;
+    setLoading(true);
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
+        let promptPrefix = "";
+        
+        // Intelligent prompt construction based on context keywords
+        if (promptContext.toLowerCase().includes("wireframe") || promptContext.toLowerCase().includes("ui") || promptContext.toLowerCase().includes("pov")) {
+            // New Prompt Logic for VR/AR as per user request
+            promptPrefix = "Photorealistic VR/AR First-Person View (POV). The scene is inside a warm, nostalgic Indian home (1970s style), NOT a sci-fi void. Realistic lighting, vintage furniture. The UI is minimal, large, and accessible, overlaid on the real environment (Augmented Reality). No futuristic holograms, no blue grid lines. Warm, comforting aesthetic for elderly users. Scene:";
+        } else {
+            promptPrefix = "Minimalist pencil sketch storyboard frame. CHARACTER CONSISTENCY REQUIRED: Arun is an elderly Indian man with white beard wearing a white Kurta. Meera is an elderly Indian woman wearing a Saree. Scene description:";
+        }
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: [
+              {
+                parts: [
+                  { text: `${promptPrefix} ${promptContext}` }
+                ]
+              }
+            ],
+            config: {
+              imageConfig: {
+                aspectRatio: "4:3"
+              }
             }
-            
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                reject(new Error('Canvas context not available'));
-                return;
-            }
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = (err) => reject(err);
-        img.src = dataUrl;
-    });
+        });
+        
+        const part = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+        if (part?.inlineData) {
+            const url = `data:image/png;base64,${part.inlineData.data}`;
+            setImageUrl(url);
+            // Save to localStorage
+            localStorage.setItem(`sketch_${id}`, url);
+        }
+    } catch (e) {
+        console.error("Sketch generation failed:", e);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full h-full bg-slate-100 rounded-xl overflow-hidden relative group flex items-center justify-center border-2 border-dashed border-slate-200">
+        {imageUrl ? (
+            <img src={imageUrl} alt={promptContext} className="w-full h-full object-cover" />
+        ) : (
+            <div className="text-center p-4">
+                <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{type}</p>
+                <button 
+                    onClick={generateSketch} 
+                    disabled={loading} 
+                    className="bg-white px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 mx-auto"
+                >
+                    {loading ? <Loader2 className="animate-spin" size={12}/> : <Wand2 size={12}/>}
+                    Generate
+                </button>
+            </div>
+        )}
+    </div>
+  );
 };
 
-// --- UPDATED SKETCH COMPONENT WITH PROMPT CONTEXT & COMPRESSION ---
-const SketchFrame = ({ type, id, promptContext }: { type: 'trigger' | 'intervention' | 'recall' | 'calm' | 'vr_interactive' | 'vr_peace', id: string, promptContext?: string }) => {
-    const [image, setImage] = useState<string | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        // Load stored image on mount
-        const storedImage = localStorage.getItem(`sanjeevani_sketch_${id}`);
-        if (storedImage) {
-            setImage(storedImage);
-        }
-    }, [id]);
-
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const result = event.target?.result as string;
-                try {
-                    // Compress uploaded image too
-                    const compressed = await compressImage(result);
-                    setImage(compressed);
-                    localStorage.setItem(`sanjeevani_sketch_${id}`, compressed);
-                } catch (err) {
-                    console.error("Compression failed, trying raw", err);
-                    setImage(result);
-                    try { localStorage.setItem(`sanjeevani_sketch_${id}`, result); } catch(e) {}
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const triggerUpload = () => {
-        if (!isGenerating) {
-            fileInputRef.current?.click();
-        }
-    };
-
-    const handleGenerate = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent upload trigger
-        if (!process.env.API_KEY) {
-            alert("API Key not found.");
-            return;
-        }
-
-        setIsGenerating(true);
-        try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            
-            // Standardized Character & Style Definitions for Consistency
-            const characterConsistency = `
-            CHARACTERS:
-            1. ARUN: An elderly Indian man (approx 75 years old), thin build, wearing a simple white kurta pajama, grey hair, glasses. He is the patient.
-            2. MEERA: A middle-aged Indian woman (approx 60 years old), wearing a simple saree, hair tied back in a bun. She is the caregiver.
-            
-            STYLE:
-            Loose pencil sketch, storyboard style. Minimalist, high contrast, architectural lines, emotional body language.
-            `;
-
-            // Combine consistency instructions with the specific scene prompt
-            const promptText = `
-            ${characterConsistency}
-            
-            SCENE DESCRIPTION:
-            ${promptContext || type}
-            `;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: { parts: [{ text: promptText }] }
-            });
-
-            if (response.candidates?.[0]?.content?.parts) {
-                for (const part of response.candidates[0].content.parts) {
-                    if (part.inlineData) {
-                         const base64Data = part.inlineData.data;
-                         const mimeType = part.inlineData.mimeType || 'image/png';
-                         const imageUrl = `data:${mimeType};base64,${base64Data}`;
-                         
-                         // Compress before saving to ensure persistence
-                         const compressedImage = await compressImage(imageUrl);
-                         
-                         setImage(compressedImage);
-                         localStorage.setItem(`sanjeevani_sketch_${id}`, compressedImage);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Image generation failed:", error);
-            alert("Failed to generate sketch. Please try again or check API limits.");
-        } finally {
-            setIsGenerating(false);
+export const Storyboard: React.FC = () => {
+    const getIcon = (iconName: string) => {
+        switch(iconName) {
+            case 'cloud-drizzle': return <CloudDrizzle size={24} />;
+            case 'tablet': return <Tablet size={24} />;
+            case 'radio': return <Radio size={24} />;
+            case 'volume-2': return <Volume2 size={24} />;
+            case 'smile': return <Smile size={24} />;
+            case 'check-circle': return <CheckCircle size={24} />;
+            case 'glasses': return <Glasses size={24} />;
+            case 'hand': return <Hand size={24} />;
+            default: return <Activity size={24} />;
         }
     };
 
     return (
-        <div className="bg-white p-4 rounded-xl border-2 border-slate-200 shadow-md transform rotate-1 transition-transform hover:rotate-0 hover:scale-[1.02] duration-300 relative group">
-             {/* Paper Texture */}
-             <div className="absolute inset-2 border border-slate-100 border-dashed rounded-lg z-0"></div>
-             
-             {/* Content Area */}
-             <div 
-                className="aspect-[4/3] bg-slate-50 relative overflow-hidden rounded-lg z-10 flex items-center justify-center cursor-pointer"
-                onClick={triggerUpload}
-             >
-                 <input 
-                    type="file" 
-                    ref={fileInputRef}
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handleUpload}
-                 />
-                 
-                 {isGenerating && (
-                     <div className="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center gap-3 animate-in fade-in">
-                         <Loader2 className="animate-spin text-emerald-500" size={32} />
-                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Sketching...</span>
-                     </div>
-                 )}
+        <div className="h-[85vh] w-full bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden p-10 flex flex-col">
+            <div className="mb-8 border-b border-slate-100 pb-6 flex-shrink-0">
+                <h2 className="text-4xl font-bold text-slate-900">Scenario Storyboard</h2>
+                <p className="text-xl text-slate-600 mt-2 font-medium">A Typical Interaction: The Sundowning Episode</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 overflow-y-auto no-scrollbar pb-10 pr-2">
+                {STORYBOARD_STEPS.map((step, i) => (
+                    <div key={i} className="flex flex-col gap-4 group">
+                        <div className="flex justify-between items-end border-b border-slate-100 pb-3">
+                            <h3 className="text-xl font-bold text-slate-900 leading-tight w-2/3">{step.title}</h3>
+                            <span className="text-4xl font-black text-slate-200 select-none group-hover:text-indigo-100 transition-colors">0{i + 1}</span>
+                        </div>
+                        
+                        <div className="w-full aspect-[4/3] bg-slate-50 rounded-2xl border-2 border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                           <SketchFrame type={step.type || "scene"} id={`s${i+1}`} promptContext={step.desc} />
+                        </div>
 
-                 {image ? (
-                     <div className="w-full h-full relative group">
-                        <img src={image} alt="Sketch" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                             <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 flex items-center gap-2">
-                                <Upload size={14} /> Change
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1 min-w-fit text-indigo-500">
+                                    {getIcon(step.icon)}
+                                </div>
+                                <p className="text-sm text-slate-600 font-medium leading-relaxed">{step.desc}</p>
                             </div>
                         </div>
-                     </div>
-                 ) : (
-                     <div className="relative w-full h-full flex items-center justify-center">
-                         {type === 'trigger' && (
-                             <div className="relative w-full h-full flex items-center justify-center">
-                                 {/* Background Elements */}
-                                 <Sunset className="text-orange-300 absolute top-4 right-4 w-16 h-16 opacity-50" />
-                                 <div className="w-full h-1/3 bg-orange-50 absolute bottom-0"></div>
-                                 
-                                 {/* Character Composition */}
-                                 <div className="relative flex flex-col items-center mt-8">
-                                     <div className="relative">
-                                         <User className="w-20 h-20 text-slate-700 stroke-[1.5]" />
-                                         <HelpCircle className="w-8 h-8 text-orange-500 absolute -top-2 -right-2 animate-bounce" />
-                                     </div>
-                                     <p className="text-[10px] font-mono text-slate-400 mt-2">Arun (Confused)</p>
-                                 </div>
-                             </div>
-                         )}
-
-                         {type === 'intervention' && (
-                             <div className="relative w-full h-full flex items-center justify-center gap-4">
-                                  {/* Elements */}
-                                  <div className="flex flex-col items-center opacity-60">
-                                      <UserPlus className="w-16 h-16 text-slate-400" />
-                                      <p className="text-[10px] font-mono text-slate-300">Meera</p>
-                                  </div>
-                                  
-                                  <ArrowRight className="text-slate-300 w-6 h-6" />
-
-                                  <div className="relative">
-                                      <Glasses className="w-20 h-20 text-emerald-600 fill-emerald-50/50" />
-                                      <Hand className="w-8 h-8 text-slate-700 absolute bottom-0 right-0 transform translate-y-2 translate-x-2 fill-slate-200" />
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                           <Radio className="w-6 h-6 text-emerald-600/50" />
-                                      </div>
-                                  </div>
-                             </div>
-                         )}
-
-                         {type === 'recall' && (
-                             <div className="relative w-full h-full flex items-center justify-center bg-amber-50/30">
-                                 {/* VR View */}
-                                 <div className="border-4 border-slate-800 rounded-xl w-32 h-20 flex items-center justify-center bg-slate-900 relative overflow-hidden">
-                                     <Radio className="w-10 h-10 text-amber-400 animate-pulse" />
-                                     <div className="absolute inset-0 bg-green-500/10 grid grid-cols-4 grid-rows-2 gap-1 opacity-20"></div>
-                                 </div>
-                                 
-                                 <p className="absolute bottom-2 font-serif italic text-amber-800/40 text-xs">"VR View..."</p>
-                             </div>
-                         )}
-
-                         {type === 'calm' && (
-                             <div className="relative w-full h-full flex items-center justify-center">
-                                 <div className="absolute inset-0 bg-gradient-to-t from-emerald-50 to-transparent opacity-50"></div>
-                                 
-                                 <div className="relative z-10 flex flex-col items-center">
-                                     <div className="relative">
-                                         <User className="w-20 h-20 text-slate-700 stroke-[1.5]" />
-                                         <Glasses className="w-8 h-8 text-slate-900 absolute top-4 left-6" />
-                                         <Smile className="w-8 h-8 text-emerald-500 fill-white absolute -bottom-1 -right-1" />
-                                     </div>
-                                     <div className="mt-4 flex gap-2">
-                                         <div className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full border border-emerald-200">HR: 72</div>
-                                         <div className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full border border-slate-200">Stable</div>
-                                     </div>
-                                 </div>
-                             </div>
-                         )}
-
-                         {type === 'vr_interactive' && (
-                             <div className="relative w-full h-full flex items-center justify-center bg-slate-900 text-emerald-400 overflow-hidden">
-                                 <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 opacity-20">
-                                     {[...Array(36)].map((_, i) => <div key={i} className="border border-emerald-900/50"></div>)}
-                                 </div>
-                                 <div className="relative z-10 flex flex-col items-center">
-                                     <MousePointerClick className="w-12 h-12 mb-2 animate-bounce" />
-                                     <div className="px-3 py-1 border border-emerald-500/50 rounded text-xs font-mono">INTERACTION</div>
-                                 </div>
-                             </div>
-                         )}
-
-                         {type === 'vr_peace' && (
-                             <div className="relative w-full h-full flex items-center justify-center bg-amber-50">
-                                 <Sun className="w-16 h-16 text-amber-400 absolute top-4 right-8 opacity-50" />
-                                 <Home className="w-20 h-20 text-slate-400" />
-                                 <p className="absolute bottom-4 text-xs font-serif italic text-slate-500">"Home..."</p>
-                             </div>
-                         )}
-                         
-                         {/* Upload/Generate Overlay (Hover) */}
-                         <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors flex items-center justify-center gap-2">
-                             
-                            <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                                <Upload size={14} /> Upload
-                            </div>
-
-                             <div 
-                                onClick={handleGenerate}
-                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-3 py-1.5 rounded-full shadow-sm text-xs font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2"
-                             >
-                                <Wand2 size={14} /> Generate
-                            </div>
-
-                        </div>
-                     </div>
-                 )}
-
-             </div>
-             
-             {/* Caption Area */}
-             <div className="mt-3 flex justify-between items-center border-t border-slate-100 pt-2">
-                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sketch</span>
-                 <span className="text-xs font-serif italic text-slate-600">
-                     {type === 'trigger' && '01: Disorientation'}
-                     {type === 'intervention' && '02: Assistance'}
-                     {type === 'recall' && '03: Connection'}
-                     {type === 'calm' && '04: Resolution'}
-                     {type === 'vr_interactive' && '05: Immersion'}
-                     {type === 'vr_peace' && '06: Memoryscape'}
-                 </span>
-             </div>
+                    </div>
+                ))}
+            </div>
         </div>
     )
+};
+
+export const TherapyRadarChart: React.FC<{ data: any[]; color?: string }> = ({ data, color = 'indigo' }) => {
+    const hexColor = COLOR_MAP[color] || color;
+    return (
+        <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
+                <Radar
+                    name="Therapy Profile"
+                    dataKey="A"
+                    stroke={hexColor}
+                    strokeWidth={3}
+                    fill={hexColor}
+                    fillOpacity={0.3}
+                />
+                <Tooltip />
+            </RadarChart>
+        </ResponsiveContainer>
+    );
+};
+
+export const InsightTriangle: React.FC = () => {
+    return (
+        <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart>
+                <XAxis type="number" dataKey="x" hide domain={[0, 100]} />
+                <YAxis type="number" dataKey="y" hide domain={[0, 100]} />
+                <Scatter data={THERAPY_TRIANGLE_DATA} fill="#8884d8">
+                    <LabelList dataKey="label" position="top" style={{ fontSize: '10px', fontWeight: 'bold' }} />
+                    {THERAPY_TRIANGLE_DATA.map((entry, index) => (
+                         <Cell key={`cell-${index}`} fill={COLOR_MAP['indigo']} />
+                    ))}
+                </Scatter>
+            </ScatterChart>
+        </ResponsiveContainer>
+    );
 }
 
-export const Storyboard: React.FC = () => {
-  return (
-    <div className="h-full w-full bg-[#fdfbf7] p-8 md:p-12 rounded-[2.5rem] overflow-y-auto no-scrollbar border border-stone-200 shadow-sm relative">
-       {/* Background Grid for Sketchbook feel */}
-       <div className="absolute inset-0 bg-[linear-gradient(#e5e7eb_1px,transparent_1px),linear-gradient(90deg,#e5e7eb_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none"></div>
-
-       <div className="max-w-5xl mx-auto relative z-10">
-           
-           {/* Header */}
-           <div className="text-center mb-16 space-y-4">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold uppercase tracking-widest mb-2 border border-amber-200">
-                  Scenario 01
-               </div>
-               <h2 className="text-5xl font-bold text-stone-900 font-serif tracking-tight">Evening Confusion</h2>
-               <p className="text-xl text-stone-500 font-medium max-w-2xl mx-auto">
-                   A step-by-step narrative of how the Nostalgia Room intervenes during a sundowning episode.
-               </p>
-           </div>
-
-           {/* Story Timeline */}
-           <div className="relative space-y-24 before:content-[''] before:absolute before:left-1/2 before:top-0 before:bottom-0 before:w-px before:bg-stone-300 before:-translate-x-1/2 hidden md:block">
-               
-               {/* Scene 1 */}
-               <div className="relative flex items-center justify-between gap-12 group">
-                   {/* Time Marker */}
-                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-orange-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-bold text-orange-800 text-center leading-tight">5:30<br/>PM</span>
-                   </div>
-                   
-                   {/* Visual Left */}
-                   <div className="w-1/2 pr-12 text-right">
-                       <SketchFrame 
-                            type="trigger" 
-                            id="scene_trigger" 
-                            promptContext="Time: 5:30 PM. Scene: The Trigger. ARUN (elderly Indian man) is standing in a living room, looking confused and anxious as the sun sets. Long shadows."
-                        />
-                   </div>
-                   
-                   {/* Text Right */}
-                   <div className="w-1/2 pl-12">
-                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Trigger</h3>
-                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           "Is it morning? Where is everyone?"
-                       </p>
-                       <p className="text-stone-500 text-sm leading-relaxed">
-                           The sun sets. Shadows lengthen. Arun becomes visibly restless, repeating questions and pacing (Sundowning).
-                       </p>
-                       <div className="flex gap-2 mt-4">
-                            <span className="px-2 py-1 bg-orange-50 text-orange-700 text-xs font-bold uppercase rounded border border-orange-100">Agitation</span>
-                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Disorientation</span>
-                       </div>
-                   </div>
-               </div>
-
-               {/* Scene 2 (Reversed) */}
-               <div className="relative flex items-center justify-between gap-12 group flex-row-reverse">
-                   {/* Time Marker */}
-                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-indigo-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-bold text-indigo-800 text-center leading-tight">5:32<br/>PM</span>
-                   </div>
-                   
-                   {/* Visual Right (now first in flex-row-reverse) */}
-                   <div className="w-1/2 pl-12">
-                       <SketchFrame 
-                            type="intervention" 
-                            id="scene_intervention" 
-                            promptContext="Time: 5:32 PM. Scene: The Intervention. MEERA (Indian woman in saree) is gently helping ARUN put on a sleek, white VR Headset. She is calm and supportive."
-                        />
-                   </div>
-                   
-                   {/* Text Left */}
-                   <div className="w-1/2 pr-12 text-right">
-                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Intervention</h3>
-                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           Meera notices. She doesn't correct him. She offers the headset.
-                       </p>
-                       <p className="text-stone-500 text-sm leading-relaxed">
-                           Instead of arguing ("No, it's evening"), she gently helps him put on the lightweight VR headset, transporting him to the Nostalgia Room.
-                       </p>
-                        <div className="flex gap-2 mt-4 justify-end">
-                            <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase rounded border border-indigo-100">Action</span>
-                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Distraction</span>
-                       </div>
-                   </div>
-               </div>
-
-               {/* Scene 3 */}
-               <div className="relative flex items-center justify-between gap-12 group">
-                   {/* Time Marker */}
-                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-amber-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-bold text-amber-800 text-center leading-tight">5:33<br/>PM</span>
-                   </div>
-                   
-                   {/* Visual Left */}
-                   <div className="w-1/2 pr-12 text-right">
-                        <SketchFrame 
-                            type="recall" 
-                            id="scene_recall" 
-                            promptContext="Time: 5:33 PM. Scene: The Recall. POV or Close-up: ARUN is wearing the VR headset, smiling. In front of him (holographic/VR view), a glowing 1980s Old Radio floats in the air, emitting music notes."
-                        />
-                   </div>
-                   
-                   {/* Text Right */}
-                   <div className="w-1/2 pl-12">
-                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Recall</h3>
-                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           "I see the old radio... is that AIR News?"
-                       </p>
-                       <p className="text-stone-500 text-sm leading-relaxed">
-                           The immersive visual of the radio and the familiar 1980s jingle act as an anchor. He stops pacing and reaches out to 'touch' the virtual dial.
-                       </p>
-                       <div className="flex gap-2 mt-4">
-                            <span className="px-2 py-1 bg-amber-50 text-amber-700 text-xs font-bold uppercase rounded border border-amber-100">Memory</span>
-                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Focus</span>
-                       </div>
-                   </div>
-               </div>
-
-                {/* Scene 4 (Reversed) */}
-               <div className="relative flex items-center justify-between gap-12 group flex-row-reverse">
-                   {/* Time Marker */}
-                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-emerald-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-bold text-emerald-800 text-center leading-tight">5:35<br/>PM</span>
-                   </div>
-                   
-                   {/* Visual Right */}
-                   <div className="w-1/2 pl-12">
-                       <SketchFrame 
-                            type="calm" 
-                            id="scene_calm" 
-                            promptContext="Time: 5:35 PM. Scene: The Calm. ARUN is sitting peacefully in an armchair, wearing the VR headset, relaxed body language. MEERA stands nearby looking relieved."
-                        />
-                   </div>
-                   
-                   {/* Text Left */}
-                   <div className="w-1/2 pr-12 text-right">
-                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Calm</h3>
-                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           Breathing stabilizes. A bridge to the past is built.
-                       </p>
-                       <p className="text-stone-500 text-sm leading-relaxed">
-                           Arun is grounded in the virtual environment. Meera logs the session as "Positive". The evening is saved from panic.
-                       </p>
-                       <div className="flex gap-2 mt-4 justify-end">
-                            <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase rounded border border-emerald-100">Success</span>
-                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Relief</span>
-                       </div>
-                   </div>
-               </div>
-
-               {/* Scene 5 */}
-               <div className="relative flex items-center justify-between gap-12 group">
-                   {/* Time Marker */}
-                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-teal-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-bold text-teal-800 text-center leading-tight">5:36<br/>PM</span>
-                   </div>
-                   
-                   {/* Visual Left */}
-                   <div className="w-1/2 pr-12 text-right">
-                        <SketchFrame 
-                            type="vr_interactive" 
-                            id="scene_vr_interactive" 
-                            promptContext="Time: 5:36 PM. Scene: Internal VR View / POV. Close up of ARUN's wrinkled hand (virtual avatar) reaching out to turn the knob of the glowing 1980s radio. The interface is warm and tactile."
-                        />
-                   </div>
-                   
-                   {/* Text Right */}
-                   <div className="w-1/2 pl-12">
-                       <h3 className="text-2xl font-bold text-stone-800 mb-3">Virtual Tactility</h3>
-                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           "I can feel the knob click..." (Haptic Feedback)
-                       </p>
-                       <p className="text-stone-500 text-sm leading-relaxed">
-                           Inside the headset, Arun interacts with the object. The simple act of "tuning" the radio gives him a sense of agency and control.
-                       </p>
-                       <div className="flex gap-2 mt-4">
-                            <span className="px-2 py-1 bg-teal-50 text-teal-700 text-xs font-bold uppercase rounded border border-teal-100">Immersion</span>
-                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Agency</span>
-                       </div>
-                   </div>
-               </div>
-
-                {/* Scene 6 (Reversed) */}
-               <div className="relative flex items-center justify-between gap-12 group flex-row-reverse">
-                   {/* Time Marker */}
-                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-blue-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-bold text-blue-800 text-center leading-tight">5:38<br/>PM</span>
-                   </div>
-                   
-                   {/* Visual Right */}
-                   <div className="w-1/2 pl-12">
-                       <SketchFrame 
-                            type="vr_peace" 
-                            id="scene_vr_peace" 
-                            promptContext="Time: 5:38 PM. Scene: Internal VR View / POV. The environment transforms into a peaceful, sunny Indian verandah from the 1970s. An old armchair, a cup of chai, and a view of a garden. Nostalgic and hyper-realistic."
-                        />
-                   </div>
-                   
-                   {/* Text Left */}
-                   <div className="w-1/2 pr-12 text-right">
-                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Memoryscape</h3>
-                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           The radio fades, revealing his childhood verandah.
-                       </p>
-                       <p className="text-stone-500 text-sm leading-relaxed">
-                           The auditory cue was just the entry point. Now, he is fully immersed in a safe, familiar environment from his long-term memory.
-                       </p>
-                       <div className="flex gap-2 mt-4 justify-end">
-                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase rounded border border-blue-100">Presence</span>
-                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Safety</span>
-                       </div>
-                   </div>
-               </div>
-
-           </div>
-
-           {/* Mobile View Fallback (Simple Stack) */}
-           <div className="md:hidden space-y-12">
-                {/* Scene 1 */}
-                <div className="flex flex-col gap-4">
-                    <div className="text-center"><span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-bold">5:30 PM</span></div>
-                    <SketchFrame type="trigger" id="mobile_scene_trigger" />
-                    <div>
-                        <h3 className="text-xl font-bold text-stone-800">The Trigger</h3>
-                        <p className="text-stone-600 italic">"Is it morning? Where is everyone?"</p>
-                    </div>
-                </div>
-                 {/* Scene 2 */}
-                <div className="flex flex-col gap-4">
-                    <div className="text-center"><span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold">5:32 PM</span></div>
-                    <SketchFrame type="intervention" id="mobile_scene_intervention" />
-                    <div>
-                        <h3 className="text-xl font-bold text-stone-800">The Intervention</h3>
-                        <p className="text-stone-600 italic">Meera acts. One tap.</p>
-                    </div>
-                </div>
-           </div>
-
-       </div>
-    </div>
-  );
+export const ExperienceMatrixChart: React.FC = () => {
+    return (
+        <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" dataKey="x" name="Calmness" domain={[0, 10]} label={{ value: 'Calmness (Low Stimulation)', position: 'bottom', offset: 0, fontSize: 12, fontWeight: 700 }} />
+                <YAxis type="number" dataKey="y" name="Cultural Relevance" domain={[0, 10]} label={{ value: 'Cultural Relevance', angle: -90, position: 'left', fontSize: 12, fontWeight: 700 }} />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} 
+                     content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                                <div className="bg-white p-3 border border-slate-200 shadow-xl rounded-xl">
+                                    <p className="font-bold text-slate-900">{data.name}</p>
+                                    <p className="text-xs text-slate-500">{data.desc}</p>
+                                </div>
+                            );
+                        }
+                        return null;
+                    }}
+                />
+                <Scatter name="Competitors" data={EXPERIENCE_MATRIX_POINTS} fill="#8884d8">
+                    {EXPERIENCE_MATRIX_POINTS.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.type === 'hero' ? '#10b981' : '#94a3b8'} />
+                    ))}
+                    <LabelList dataKey="name" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#475569' }} />
+                </Scatter>
+            </ScatterChart>
+        </ResponsiveContainer>
+    );
 };
 
 export const Benchmarking: React.FC = () => {
     return (
-        <div className="p-8 bg-white rounded-3xl shadow-sm border border-slate-200">
-             <h3 className="text-2xl font-bold mb-6">Benchmarking Analysis</h3>
-             <div className="space-y-4">
-                 {EXPERIENCE_MATRIX_POINTS.map((point, i) => (
-                     <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
-                         <span className="font-bold text-slate-700">{point.name}</span>
-                         <span className="text-sm text-slate-500">{point.desc}</span>
-                     </div>
-                 ))}
-             </div>
-        </div>
-    )
-};
-
-export const TherapyRadarChart: React.FC<{ data?: any[]; color?: string }> = ({ data, color = 'indigo' }) => {
-  const chartData = data || THERAPY_RADAR_DATA.reminiscence;
-  const hexColor = COLOR_MAP[color] || COLOR_MAP['indigo'];
-
-  return (
-    <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-      <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-        <PolarGrid stroke="#e2e8f0" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 13, fontWeight: 700 }} />
-        <PolarRadiusAxis angle={30} domain={[0, 10]} tick={false} axisLine={false} />
-        <Radar name="Therapy" dataKey="A" stroke={hexColor} strokeWidth={3} fill={hexColor} fillOpacity={0.3} />
-        <Tooltip 
-            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-            itemStyle={{ color: hexColor, fontWeight: 'bold' }}
-        />
-      </RadarChart>
-    </ResponsiveContainer>
-  );
-};
-
-export const InsightTriangle: React.FC = () => {
-  return (
-    <div className="w-full h-full relative select-none">
-       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
-            <XAxis type="number" dataKey="x" hide domain={[0, 100]} />
-            <YAxis type="number" dataKey="y" hide domain={[0, 100]} />
-            <ZAxis range={[60, 100]} />
-            <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }}
-                content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                            <div className="bg-slate-900/90 text-white p-3 rounded-lg text-xs font-bold shadow-xl backdrop-blur-sm">
-                                {data.label}
-                            </div>
-                        );
-                    }
-                    return null;
-                }}
-            />
-            <Scatter data={THERAPY_TRIANGLE_DATA} shape={(props: any) => {
-               const { cx, cy, payload } = props;
-               const isVertex = ['memory', 'identity', 'emotion'].includes(payload.id);
-               
-               if (isVertex) {
-                   return (
-                       <g>
-                           <circle cx={cx} cy={cy} r={24} fill="white" stroke="#94a3b8" strokeWidth={2} className="drop-shadow-sm" />
-                           <text x={cx} y={cy} dy={4} textAnchor="middle" className="text-[9px] font-extrabold fill-slate-500 uppercase tracking-widest">
-                               {payload.label}
-                           </text>
-                       </g>
-                   )
-               }
-               return (
-                  <g className="group cursor-pointer">
-                      <circle cx={cx} cy={cy} r={10} fill={payload.x > 50 ? '#10b981' : '#6366f1'} className="group-hover:scale-125 transition-transform origin-center shadow-sm" />
-                      <text x={cx} y={cy} dy={-18} textAnchor="middle" className="text-[10px] font-bold fill-slate-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white">
-                          {payload.label}
-                      </text>
-                  </g>
-               );
-            }} />
-        </ScatterChart>
-       </ResponsiveContainer>
-       {/* Background Triangle Connection Lines */}
-       <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-20">
-            {/* 
-               Based on standard Recharts margin 40px and domain 0-100.
-               Approximate relative positions:
-               Memory (10,10) -> Left-Bottom
-               Identity (50,90) -> Center-Top
-               Emotion (90,10) -> Right-Bottom
-               
-               In SVG coordinate space (0,0 is top-left):
-               Memory: 10% x, 90% y
-               Identity: 50% x, 10% y
-               Emotion: 90% x, 90% y
-            */}
-            <path d="M 10% 90% L 50% 10% L 90% 90% Z" fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="8 4" />
-       </svg>
-    </div>
-  )
-};
-
-const CustomScatterShape = (props: any) => {
-  const { cx, cy, fill, payload } = props;
-  const isHero = payload.type === 'hero';
-
-  return (
-    <g style={{ cursor: 'pointer' }}>
-      {/* Invisible hit area for easier hovering */}
-      <circle cx={cx} cy={cy} r={24} fill="transparent" />
-      
-      {isHero ? (
-        <g>
-          {/* Subtle stable glow instead of erratic ping */}
-          <circle cx={cx} cy={cy} r={28} fill={fill} fillOpacity={0.15} />
-          <circle cx={cx} cy={cy} r={22} fill={fill} fillOpacity={0.25} className="animate-pulse" />
-          <circle cx={cx} cy={cy} r={12} fill={fill} stroke="#ffffff" strokeWidth={3} className="shadow-lg" />
-          <Star x={cx - 6} y={cy - 6} size={12} fill="#ffffff" stroke="none" />
-        </g>
-      ) : (
-        <g className="transition-all duration-300 hover:scale-125">
-             <circle 
-                cx={cx} 
-                cy={cy} 
-                r={8} 
-                fill={fill} 
-                stroke="#ffffff" 
-                strokeWidth={2} 
-                className="drop-shadow-sm"
-            />
-        </g>
-      )}
-    </g>
-  );
-};
-
-export const ExperienceMatrixChart: React.FC = () => {
-    return (
-        <div className="h-full w-full relative">
-            <ResponsiveContainer width="100%" height="100%" minHeight={400}>
-                <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 30 }}>
-                    <defs>
-                        {/* Vibrant yet subtle quadrant gradients */}
-                        <linearGradient id="gradAnxiety" x1="0" y1="1" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#fff1f2" stopOpacity={0.9} /> 
-                            <stop offset="100%" stopColor="#fff1f2" stopOpacity={0.2} />
-                        </linearGradient>
-                        <linearGradient id="gradGeneric" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#eff6ff" stopOpacity={0.9} /> 
-                            <stop offset="100%" stopColor="#eff6ff" stopOpacity={0.2} />
-                        </linearGradient>
-                        <linearGradient id="gradMismatch" x1="1" y1="1" x2="0" y2="0">
-                            <stop offset="0%" stopColor="#fffbeb" stopOpacity={0.9} /> 
-                            <stop offset="100%" stopColor="#fffbeb" stopOpacity={0.2} />
-                        </linearGradient>
-                        <linearGradient id="gradBlueOcean" x1="1" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#ecfdf5" stopOpacity={1} /> 
-                            <stop offset="100%" stopColor="#d1fae5" stopOpacity={0.4} />
-                        </linearGradient>
-                    </defs>
-                    
-                    {/* Background Grids - Softer */}
-                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" horizontal={true} vertical={true} opacity={0.5} />
-                    
-                    {/* Axes */}
-                    <XAxis 
-                        type="number" 
-                        dataKey="x" 
-                        name="Cultural Relevance" 
-                        domain={[0, 10]} 
-                        tickCount={6}
-                        tickLine={false}
-                        axisLine={{ stroke: '#94a3b8', strokeWidth: 2 }}
-                        label={{ value: 'Cultural Relevance →', position: 'bottom', fill: '#64748b', fontSize: 13, fontWeight: 600, offset: 0 }} 
-                    />
-                    <YAxis 
-                        type="number" 
-                        dataKey="y" 
-                        name="Emotional Comfort" 
-                        domain={[0, 10]} 
-                        tickCount={6}
-                        tickLine={false}
-                        axisLine={{ stroke: '#94a3b8', strokeWidth: 2 }}
-                        label={{ value: 'Emotional Comfort →', angle: -90, position: 'left', fill: '#64748b', fontSize: 13, fontWeight: 600, offset: 0 }} 
-                    />
-
-                    {/* Quadrant Backgrounds - Full Color */}
-                    <ReferenceArea x1={0} x2={5} y1={0} y2={5} fill="url(#gradAnxiety)" />
-                    <ReferenceArea x1={0} x2={5} y1={5} y2={10} fill="url(#gradGeneric)" />
-                    <ReferenceArea x1={5} x2={10} y1={0} y2={5} fill="url(#gradMismatch)" />
-                    <ReferenceArea x1={5} x2={10} y1={5} y2={10} fill="url(#gradBlueOcean)" />
-                    
-                    {/* Quadrant Labels - Balanced & Cornered */}
-                    <ReferenceArea x1={0} x2={5} y1={0} y2={5} stroke="none" label={{ value: "Anxiety Zone", position: 'insideTopLeft', fill: '#be123c', fontSize: 14, fontWeight: 700, dx: 20, dy: 20 }} />
-                    <ReferenceArea x1={0} x2={5} y1={5} y2={10} stroke="none" label={{ value: "Generic / Calm", position: 'insideBottomLeft', fill: '#1d4ed8', fontSize: 14, fontWeight: 700, dx: 20, dy: -20 }} />
-                    <ReferenceArea x1={5} x2={10} y1={0} y2={5} stroke="none" label={{ value: "Cultural Mismatch", position: 'insideTopRight', fill: '#b45309', fontSize: 14, fontWeight: 700, dx: -20, dy: 20 }} />
-                    <ReferenceArea x1={5} x2={10} y1={5} y2={10} stroke="none" label={{ value: "Blue Ocean", position: 'insideBottomRight', fill: '#047857', fontSize: 14, fontWeight: 700, dx: -20, dy: -20 }} />
-
-                    {/* Crosshair Lines */}
-                    <ReferenceLine x={5} stroke="#94a3b8" strokeWidth={1} strokeDasharray="5 5" />
-                    <ReferenceLine y={5} stroke="#94a3b8" strokeWidth={1} strokeDasharray="5 5" />
-
-                    {/* Tooltip */}
-                    <Tooltip 
-                        cursor={{ strokeDasharray: '3 3' }} 
-                        content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                                const data = payload[0].payload;
-                                return (
-                                    <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl border border-slate-700 z-50">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            {data.type === 'hero' && <Star size={12} className="text-emerald-400" fill="currentColor" />}
-                                            <p className="font-bold text-sm">{data.name}</p>
-                                        </div>
-                                        <p className="text-xs text-slate-400 italic">{data.desc}</p>
-                                        <div className="mt-2 text-[10px] text-slate-500 font-mono">
-                                            ({data.x}, {data.y})
-                                        </div>
-                                    </div>
-                                );
-                            }
-                            return null;
-                        }} 
-                    />
-
-                    {/* Data Points */}
-                    <Scatter name="Competitors" data={EXPERIENCE_MATRIX_POINTS} shape={<CustomScatterShape />}>
-                        {EXPERIENCE_MATRIX_POINTS.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.type === 'hero' ? '#10b981' : '#64748b'} />))}
-                        <LabelList 
-                            dataKey="name" 
-                            position="top" 
-                            offset={15} 
-                            style={{ fill: '#334155', fontSize: '12px', fontWeight: '700', fontFamily: 'Poppins', pointerEvents: 'none', textShadow: '0 2px 8px rgba(255,255,255,0.8)' }} 
-                        />
-                    </Scatter>
-                </ScatterChart>
-            </ResponsiveContainer>
+        <div className="p-10 h-full flex flex-col">
+            <h2 className="text-3xl font-bold text-slate-900 mb-6">Competitive Landscape</h2>
+            <div className="flex-grow bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+                 <ExperienceMatrixChart />
+            </div>
         </div>
     );
-};
-
-export const HypothesisConstellation: React.FC = () => {
-  return null; // Deprecated view
 };
