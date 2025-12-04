@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceArea, ReferenceLine, Customized, ZAxis } from 'recharts';
 import { JOURNEY_DATA, EXPERIENCE_MATRIX_POINTS, STORYBOARD_STEPS, THERAPY_TRIANGLE_DATA, SENSORY_TRIGGER_DATA, HYPOTHESIS_NODES, HYPOTHESIS_LINKS, THERAPY_RADAR_DATA } from '../constants';
-import { AlertCircle, Zap, Smile, CheckCircle, Tablet, Radio, Volume2, CloudDrizzle, CloudLightning, Sun, Activity, Upload, Image as ImageIcon, Music, Heart, Eye, Hand, Wind, Brain, User, ArrowUpRight, Target, Star, Hexagon, ZoomIn, ZoomOut, RotateCcw, Move, MousePointer2, UserCircle, Clock, AlertTriangle, Check, ArrowRight, MessageSquare, Sunset, Coffee, Frown, Mic, HelpCircle, UserPlus, Music2, Wifi, Trash2 } from 'lucide-react';
+import { AlertCircle, Zap, Smile, CheckCircle, Tablet, Radio, Volume2, CloudDrizzle, CloudLightning, Sun, Activity, Upload, Image as ImageIcon, Music, Heart, Eye, Hand, Wind, Brain, User, ArrowUpRight, Target, Star, Hexagon, ZoomIn, ZoomOut, RotateCcw, Move, MousePointer2, UserCircle, Clock, AlertTriangle, Check, ArrowRight, MessageSquare, Sunset, Coffee, Frown, Mic, HelpCircle, UserPlus, Music2, Wifi, Trash2, Wand2, Loader2, Glasses, MousePointerClick, Home } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 
 const COLOR_MAP: Record<string, string> = {
   indigo: '#4f46e5',
@@ -205,9 +206,40 @@ export const SensoryConcentricMap: React.FC = () => {
   )
 };
 
-// --- NEW SKETCH COMPONENT FOR STORYBOARD ---
-const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall' | 'calm', id: string }) => {
+// --- IMAGE COMPRESSION UTILITY ---
+const compressImage = (dataUrl: string, quality = 0.6, maxWidth = 800): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Canvas context not available'));
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = (err) => reject(err);
+        img.src = dataUrl;
+    });
+};
+
+// --- UPDATED SKETCH COMPONENT WITH PROMPT CONTEXT & COMPRESSION ---
+const SketchFrame = ({ type, id, promptContext }: { type: 'trigger' | 'intervention' | 'recall' | 'calm' | 'vr_interactive' | 'vr_peace', id: string, promptContext?: string }) => {
     const [image, setImage] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -218,21 +250,88 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
         }
     }, [id]);
 
-    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 const result = event.target?.result as string;
-                setImage(result);
-                localStorage.setItem(`sanjeevani_sketch_${id}`, result);
+                try {
+                    // Compress uploaded image too
+                    const compressed = await compressImage(result);
+                    setImage(compressed);
+                    localStorage.setItem(`sanjeevani_sketch_${id}`, compressed);
+                } catch (err) {
+                    console.error("Compression failed, trying raw", err);
+                    setImage(result);
+                    try { localStorage.setItem(`sanjeevani_sketch_${id}`, result); } catch(e) {}
+                }
             };
             reader.readAsDataURL(file);
         }
     };
 
     const triggerUpload = () => {
-        fileInputRef.current?.click();
+        if (!isGenerating) {
+            fileInputRef.current?.click();
+        }
+    };
+
+    const handleGenerate = async (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent upload trigger
+        if (!process.env.API_KEY) {
+            alert("API Key not found.");
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            
+            // Standardized Character & Style Definitions for Consistency
+            const characterConsistency = `
+            CHARACTERS:
+            1. ARUN: An elderly Indian man (approx 75 years old), thin build, wearing a simple white kurta pajama, grey hair, glasses. He is the patient.
+            2. MEERA: A middle-aged Indian woman (approx 60 years old), wearing a simple saree, hair tied back in a bun. She is the caregiver.
+            
+            STYLE:
+            Loose pencil sketch, storyboard style. Minimalist, high contrast, architectural lines, emotional body language.
+            `;
+
+            // Combine consistency instructions with the specific scene prompt
+            const promptText = `
+            ${characterConsistency}
+            
+            SCENE DESCRIPTION:
+            ${promptContext || type}
+            `;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [{ text: promptText }] }
+            });
+
+            if (response.candidates?.[0]?.content?.parts) {
+                for (const part of response.candidates[0].content.parts) {
+                    if (part.inlineData) {
+                         const base64Data = part.inlineData.data;
+                         const mimeType = part.inlineData.mimeType || 'image/png';
+                         const imageUrl = `data:${mimeType};base64,${base64Data}`;
+                         
+                         // Compress before saving to ensure persistence
+                         const compressedImage = await compressImage(imageUrl);
+                         
+                         setImage(compressedImage);
+                         localStorage.setItem(`sanjeevani_sketch_${id}`, compressedImage);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Image generation failed:", error);
+            alert("Failed to generate sketch. Please try again or check API limits.");
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     return (
@@ -252,14 +351,21 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
                     accept="image/*"
                     onChange={handleUpload}
                  />
+                 
+                 {isGenerating && (
+                     <div className="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center gap-3 animate-in fade-in">
+                         <Loader2 className="animate-spin text-emerald-500" size={32} />
+                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Sketching...</span>
+                     </div>
+                 )}
 
                  {image ? (
                      <div className="w-full h-full relative group">
                         <img src={image} alt="Sketch" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="bg-white/90 px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 flex items-center gap-2">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                             <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 flex items-center gap-2">
                                 <Upload size={14} /> Change
-                            </span>
+                            </div>
                         </div>
                      </div>
                  ) : (
@@ -292,10 +398,10 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
                                   <ArrowRight className="text-slate-300 w-6 h-6" />
 
                                   <div className="relative">
-                                      <Tablet className="w-20 h-24 text-emerald-600 fill-emerald-50" />
+                                      <Glasses className="w-20 h-20 text-emerald-600 fill-emerald-50/50" />
                                       <Hand className="w-8 h-8 text-slate-700 absolute bottom-0 right-0 transform translate-y-2 translate-x-2 fill-slate-200" />
                                       <div className="absolute inset-0 flex items-center justify-center">
-                                           <Radio className="w-8 h-8 text-emerald-600/50" />
+                                           <Radio className="w-6 h-6 text-emerald-600/50" />
                                       </div>
                                   </div>
                              </div>
@@ -303,15 +409,13 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
 
                          {type === 'recall' && (
                              <div className="relative w-full h-full flex items-center justify-center bg-amber-50/30">
-                                 {/* Radio Active */}
-                                 <Radio className="w-24 h-24 text-amber-600 stroke-[1.5]" />
+                                 {/* VR View */}
+                                 <div className="border-4 border-slate-800 rounded-xl w-32 h-20 flex items-center justify-center bg-slate-900 relative overflow-hidden">
+                                     <Radio className="w-10 h-10 text-amber-400 animate-pulse" />
+                                     <div className="absolute inset-0 bg-green-500/10 grid grid-cols-4 grid-rows-2 gap-1 opacity-20"></div>
+                                 </div>
                                  
-                                 {/* Waves */}
-                                 <Wifi className="w-12 h-12 text-amber-400 absolute top-4 right-8 rotate-12 animate-pulse" />
-                                 <Music className="w-8 h-8 text-amber-500 absolute bottom-6 left-8 -rotate-12" />
-                                 <Music2 className="w-6 h-6 text-amber-500 absolute top-6 left-12 rotate-45" />
-                                 
-                                 <p className="absolute bottom-2 font-serif italic text-amber-800/40 text-xs">"AIR News..."</p>
+                                 <p className="absolute bottom-2 font-serif italic text-amber-800/40 text-xs">"VR View..."</p>
                              </div>
                          )}
 
@@ -322,6 +426,7 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
                                  <div className="relative z-10 flex flex-col items-center">
                                      <div className="relative">
                                          <User className="w-20 h-20 text-slate-700 stroke-[1.5]" />
+                                         <Glasses className="w-8 h-8 text-slate-900 absolute top-4 left-6" />
                                          <Smile className="w-8 h-8 text-emerald-500 fill-white absolute -bottom-1 -right-1" />
                                      </div>
                                      <div className="mt-4 flex gap-2">
@@ -331,12 +436,41 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
                                  </div>
                              </div>
                          )}
+
+                         {type === 'vr_interactive' && (
+                             <div className="relative w-full h-full flex items-center justify-center bg-slate-900 text-emerald-400 overflow-hidden">
+                                 <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 opacity-20">
+                                     {[...Array(36)].map((_, i) => <div key={i} className="border border-emerald-900/50"></div>)}
+                                 </div>
+                                 <div className="relative z-10 flex flex-col items-center">
+                                     <MousePointerClick className="w-12 h-12 mb-2 animate-bounce" />
+                                     <div className="px-3 py-1 border border-emerald-500/50 rounded text-xs font-mono">INTERACTION</div>
+                                 </div>
+                             </div>
+                         )}
+
+                         {type === 'vr_peace' && (
+                             <div className="relative w-full h-full flex items-center justify-center bg-amber-50">
+                                 <Sun className="w-16 h-16 text-amber-400 absolute top-4 right-8 opacity-50" />
+                                 <Home className="w-20 h-20 text-slate-400" />
+                                 <p className="absolute bottom-4 text-xs font-serif italic text-slate-500">"Home..."</p>
+                             </div>
+                         )}
                          
-                         {/* Upload Overlay (Hover) */}
-                         <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors flex items-center justify-center">
+                         {/* Upload/Generate Overlay (Hover) */}
+                         <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors flex items-center justify-center gap-2">
+                             
                             <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm text-xs font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                                <Upload size={14} /> Upload Sketch
+                                <Upload size={14} /> Upload
                             </div>
+
+                             <div 
+                                onClick={handleGenerate}
+                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-3 py-1.5 rounded-full shadow-sm text-xs font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2"
+                             >
+                                <Wand2 size={14} /> Generate
+                            </div>
+
                         </div>
                      </div>
                  )}
@@ -351,6 +485,8 @@ const SketchFrame = ({ type, id }: { type: 'trigger' | 'intervention' | 'recall'
                      {type === 'intervention' && '02: Assistance'}
                      {type === 'recall' && '03: Connection'}
                      {type === 'calm' && '04: Resolution'}
+                     {type === 'vr_interactive' && '05: Immersion'}
+                     {type === 'vr_peace' && '06: Memoryscape'}
                  </span>
              </div>
         </div>
@@ -388,7 +524,11 @@ export const Storyboard: React.FC = () => {
                    
                    {/* Visual Left */}
                    <div className="w-1/2 pr-12 text-right">
-                       <SketchFrame type="trigger" id="scene_trigger" />
+                       <SketchFrame 
+                            type="trigger" 
+                            id="scene_trigger" 
+                            promptContext="Time: 5:30 PM. Scene: The Trigger. ARUN (elderly Indian man) is standing in a living room, looking confused and anxious as the sun sets. Long shadows."
+                        />
                    </div>
                    
                    {/* Text Right */}
@@ -416,17 +556,21 @@ export const Storyboard: React.FC = () => {
                    
                    {/* Visual Right (now first in flex-row-reverse) */}
                    <div className="w-1/2 pl-12">
-                       <SketchFrame type="intervention" id="scene_intervention" />
+                       <SketchFrame 
+                            type="intervention" 
+                            id="scene_intervention" 
+                            promptContext="Time: 5:32 PM. Scene: The Intervention. MEERA (Indian woman in saree) is gently helping ARUN put on a sleek, white VR Headset. She is calm and supportive."
+                        />
                    </div>
                    
                    {/* Text Left */}
                    <div className="w-1/2 pr-12 text-right">
                        <h3 className="text-2xl font-bold text-stone-800 mb-3">The Intervention</h3>
                        <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           Meera notices. She doesn't correct him. She opens Sanjeevani.
+                           Meera notices. She doesn't correct him. She offers the headset.
                        </p>
                        <p className="text-stone-500 text-sm leading-relaxed">
-                           Instead of arguing ("No, it's evening"), she hands him the tablet showing the Nostalgia Room. She taps the <span className="font-bold text-stone-700">Old Radio</span>.
+                           Instead of arguing ("No, it's evening"), she gently helps him put on the lightweight VR headset, transporting him to the Nostalgia Room.
                        </p>
                         <div className="flex gap-2 mt-4 justify-end">
                             <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase rounded border border-indigo-100">Action</span>
@@ -444,17 +588,21 @@ export const Storyboard: React.FC = () => {
                    
                    {/* Visual Left */}
                    <div className="w-1/2 pr-12 text-right">
-                        <SketchFrame type="recall" id="scene_recall" />
+                        <SketchFrame 
+                            type="recall" 
+                            id="scene_recall" 
+                            promptContext="Time: 5:33 PM. Scene: The Recall. POV or Close-up: ARUN is wearing the VR headset, smiling. In front of him (holographic/VR view), a glowing 1980s Old Radio floats in the air, emitting music notes."
+                        />
                    </div>
                    
                    {/* Text Right */}
                    <div className="w-1/2 pl-12">
                        <h3 className="text-2xl font-bold text-stone-800 mb-3">The Recall</h3>
                        <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
-                           "I know this tune... AIR News?"
+                           "I see the old radio... is that AIR News?"
                        </p>
                        <p className="text-stone-500 text-sm leading-relaxed">
-                           The familiar static and 1980s jingle act as an auditory anchor. His pacing stops. He sits down, leaning toward the sound.
+                           The immersive visual of the radio and the familiar 1980s jingle act as an anchor. He stops pacing and reaches out to 'touch' the virtual dial.
                        </p>
                        <div className="flex gap-2 mt-4">
                             <span className="px-2 py-1 bg-amber-50 text-amber-700 text-xs font-bold uppercase rounded border border-amber-100">Memory</span>
@@ -472,7 +620,11 @@ export const Storyboard: React.FC = () => {
                    
                    {/* Visual Right */}
                    <div className="w-1/2 pl-12">
-                       <SketchFrame type="calm" id="scene_calm" />
+                       <SketchFrame 
+                            type="calm" 
+                            id="scene_calm" 
+                            promptContext="Time: 5:35 PM. Scene: The Calm. ARUN is sitting peacefully in an armchair, wearing the VR headset, relaxed body language. MEERA stands nearby looking relieved."
+                        />
                    </div>
                    
                    {/* Text Left */}
@@ -482,11 +634,75 @@ export const Storyboard: React.FC = () => {
                            Breathing stabilizes. A bridge to the past is built.
                        </p>
                        <p className="text-stone-500 text-sm leading-relaxed">
-                           Arun is grounded. Meera logs the session as "Positive" in the dashboard. The evening is saved from panic.
+                           Arun is grounded in the virtual environment. Meera logs the session as "Positive". The evening is saved from panic.
                        </p>
                        <div className="flex gap-2 mt-4 justify-end">
                             <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold uppercase rounded border border-emerald-100">Success</span>
                             <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Relief</span>
+                       </div>
+                   </div>
+               </div>
+
+               {/* Scene 5 */}
+               <div className="relative flex items-center justify-between gap-12 group">
+                   {/* Time Marker */}
+                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-teal-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-bold text-teal-800 text-center leading-tight">5:36<br/>PM</span>
+                   </div>
+                   
+                   {/* Visual Left */}
+                   <div className="w-1/2 pr-12 text-right">
+                        <SketchFrame 
+                            type="vr_interactive" 
+                            id="scene_vr_interactive" 
+                            promptContext="Time: 5:36 PM. Scene: Internal VR View / POV. Close up of ARUN's wrinkled hand (virtual avatar) reaching out to turn the knob of the glowing 1980s radio. The interface is warm and tactile."
+                        />
+                   </div>
+                   
+                   {/* Text Right */}
+                   <div className="w-1/2 pl-12">
+                       <h3 className="text-2xl font-bold text-stone-800 mb-3">Virtual Tactility</h3>
+                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
+                           "I can feel the knob click..." (Haptic Feedback)
+                       </p>
+                       <p className="text-stone-500 text-sm leading-relaxed">
+                           Inside the headset, Arun interacts with the object. The simple act of "tuning" the radio gives him a sense of agency and control.
+                       </p>
+                       <div className="flex gap-2 mt-4">
+                            <span className="px-2 py-1 bg-teal-50 text-teal-700 text-xs font-bold uppercase rounded border border-teal-100">Immersion</span>
+                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Agency</span>
+                       </div>
+                   </div>
+               </div>
+
+                {/* Scene 6 (Reversed) */}
+               <div className="relative flex items-center justify-between gap-12 group flex-row-reverse">
+                   {/* Time Marker */}
+                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#fdfbf7] border-4 border-blue-200 rounded-full flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-bold text-blue-800 text-center leading-tight">5:38<br/>PM</span>
+                   </div>
+                   
+                   {/* Visual Right */}
+                   <div className="w-1/2 pl-12">
+                       <SketchFrame 
+                            type="vr_peace" 
+                            id="scene_vr_peace" 
+                            promptContext="Time: 5:38 PM. Scene: Internal VR View / POV. The environment transforms into a peaceful, sunny Indian verandah from the 1970s. An old armchair, a cup of chai, and a view of a garden. Nostalgic and hyper-realistic."
+                        />
+                   </div>
+                   
+                   {/* Text Left */}
+                   <div className="w-1/2 pr-12 text-right">
+                       <h3 className="text-2xl font-bold text-stone-800 mb-3">The Memoryscape</h3>
+                       <p className="text-lg text-stone-600 font-serif italic leading-relaxed mb-4">
+                           The radio fades, revealing his childhood verandah.
+                       </p>
+                       <p className="text-stone-500 text-sm leading-relaxed">
+                           The auditory cue was just the entry point. Now, he is fully immersed in a safe, familiar environment from his long-term memory.
+                       </p>
+                       <div className="flex gap-2 mt-4 justify-end">
+                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase rounded border border-blue-100">Presence</span>
+                            <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs font-bold uppercase rounded border border-stone-200">Safety</span>
                        </div>
                    </div>
                </div>
